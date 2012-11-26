@@ -9,9 +9,9 @@ Gem::Specification.new do |s|
   s.version     = EnjuTrunkStatistics::VERSION
   s.authors     = ["Emiko Tamiya"]
   s.email       = ["tamiya.emiko@miraitsystems.jp"]
-  s.homepage    = "TODO"
-  s.summary     = "TODO: Summary of EnjuTrunkStatistics."
-  s.description = "TODO: Description of EnjuTrunkStatistics."
+  s.homepage    = "https://github.com/nakamura-akifumi/enju_trunk"
+  s.summary     = "EnjuCirculation for EnjuTrunk"
+  s.description = "to circulate and export statistics for EnjuTrunk"
 
   s.files = Dir["{app,config,db,lib}/**/*"] + ["MIT-LICENSE", "Rakefile", "README.rdoc"]
   s.test_files = Dir["test/**/*"]
