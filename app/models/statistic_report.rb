@@ -4,7 +4,7 @@ class StatisticReport < ActiveRecord::Base
     checkout_types = CheckoutType.all
     user_groups = UserGroup.all
     begin 
-      report = ThinReports::Report.new :layout => "#{Rails.root.to_s}/app/views/statistic_reports/monthly_report"
+      report = ThinReports::Report.new :layout => get_layout_path("monthly_report")
 
       report.events.on :page_create do |e|
         e.page.item(:page).value(e.page.no)
@@ -22,7 +22,6 @@ class StatisticReport < ActiveRecord::Base
       12.times do |t|
       end
 
-# emiko
       # items all libraries
       data_type = 111
       report.page.list(:list).add_row do |row|
@@ -2093,7 +2092,7 @@ class StatisticReport < ActiveRecord::Base
     logger.error "create daily statistic report: #{term}"
 
     begin
-      report = ThinReports::Report.new :layout => "#{Rails.root.to_s}/app/views/statistic_reports/daily_report"
+      report = ThinReports::Report.new :layout => get_layout_path("daily_report")
       report.events.on :page_create do |e|
         e.page.item(:page).value(e.page.no)
       end
@@ -3286,7 +3285,7 @@ class StatisticReport < ActiveRecord::Base
     logger.error "create daily timezone report: #{start_at} - #{end_at}"
 
     begin
-      report = ThinReports::Report.new :layout => "#{Rails.root.to_s}/app/views/statistic_reports/timezone_report"
+      report = ThinReports::Report.new :layout => get_layout_path("timezone_report")
       report.events.on :page_create do |e|
         e.page.item(:page).value(e.page.no)
       end
@@ -4049,7 +4048,7 @@ class StatisticReport < ActiveRecord::Base
     logger.error "create day statistic report: #{start_at} - #{end_at}"
 
     begin
-      report = ThinReports::Report.new :layout => "#{Rails.root.to_s}/app/views/statistic_reports/day_report"
+      report = ThinReports::Report.new :layout => get_layout_path("day_report")
       report.events.on :page_create do |e|
         e.page.item(:page).value(e.page.no)
       end
@@ -4801,7 +4800,7 @@ class StatisticReport < ActiveRecord::Base
     logger.error "create day statistic report: #{start_at} - #{end_at}"
 
     begin
-      report = ThinReports::Report.new :layout => "#{Rails.root.to_s}/app/views/statistic_reports/age_report"
+      report = ThinReports::Report.new :layout => get_layout_path("age_report")
       report.events.on :page_create do |e|
         e.page.item(:page).value(e.page.no)
       end
@@ -6360,7 +6359,7 @@ class StatisticReport < ActiveRecord::Base
     checkout_types = CheckoutType.all
     call_numbers = Statistic.call_numbers
     begin 
-      report = ThinReports::Report.new :layout => "#{Rails.root.to_s}/app/views/statistic_reports/items_daily"
+      report = ThinReports::Report.new :layout => get_layout_path("items_daily")
 
       report.events.on :page_create do |e|
         e.page.item(:page).value(e.page.no)
@@ -6873,7 +6872,7 @@ class StatisticReport < ActiveRecord::Base
     checkout_types = CheckoutType.all
     call_numbers = Statistic.call_numbers
     begin 
-      report = ThinReports::Report.new :layout => "#{Rails.root.to_s}/app/views/statistic_reports/items_monthly"
+      report = ThinReports::Report.new :layout => get_layout_path("items_monthly")
 
       report.events.on :page_create do |e|
         e.page.item(:page).value(e.page.no)
@@ -7368,7 +7367,7 @@ class StatisticReport < ActiveRecord::Base
     logger.error "create daily inout items statistic report: #{term}"
 
     begin
-      report = ThinReports::Report.new :layout => "#{Rails.root.to_s}/app/views/statistic_reports/inout_items_daily"
+      report = ThinReports::Report.new :layout => get_layout_path("inout_items_daily")
       report.events.on :page_create do |e|
         e.page.item(:page).value(e.page.no)
       end
@@ -8118,7 +8117,7 @@ class StatisticReport < ActiveRecord::Base
     checkout_types = CheckoutType.all
     call_numbers = Statistic.call_numbers
     begin 
-      report = ThinReports::Report.new :layout => "#{Rails.root.to_s}/app/views/statistic_reports/inout_items_monthly"
+      report = ThinReports::Report.new :layout => get_layout_path("inout_items_monthly")
 
       report.events.on :page_create do |e|
         e.page.item(:page).value(e.page.no)
@@ -8961,7 +8960,7 @@ class StatisticReport < ActiveRecord::Base
     logger.error "create daily inter library loans statistic report: #{term}"
     libraries = Library.all
     begin
-      report = ThinReports::Report.new :layout => "#{Rails.root.to_s}/app/views/statistic_reports/loans_daily"
+      report = ThinReports::Report.new :layout => get_layout_path("loans_daily")
       report.events.on :page_create do |e|
         e.page.item(:page).value(e.page.no)
       end
@@ -9149,7 +9148,7 @@ class StatisticReport < ActiveRecord::Base
     logger.error "create monthly inter library loans statistic report: #{term}"
     libraries = Library.all
     begin
-      report = ThinReports::Report.new :layout => "#{Rails.root.to_s}/app/views/statistic_reports/loans_monthly"
+      report = ThinReports::Report.new :layout => get_layout_path("loans_monthly")
       report.events.on :page_create do |e|
         e.page.item(:page).value(e.page.no)
       end
@@ -9311,7 +9310,7 @@ class StatisticReport < ActiveRecord::Base
     end
     dir_base = "#{Rails.root}/private/system"
     begin
-      report = ThinReports::Report.new :layout => "#{Rails.root.to_s}/app/views/statistic_reports/groups_monthly"
+      report = ThinReports::Report.new :layout => get_layout_path("groups_monthly")
 
       report.events.on :page_create do |e|
         e.page.item(:page).value(e.page.no)
@@ -9424,7 +9423,7 @@ class StatisticReport < ActiveRecord::Base
       return false
     end
     begin
-      report = ThinReports::Report.new :layout => "#{Rails.root.to_s}/app/views/statistic_reports/groups_daily"
+      report = ThinReports::Report.new :layout => get_layout_path("groups_daily")
       report.events.on :page_create do |e|
         e.page.item(:page).value(e.page.no)
       end
@@ -9590,4 +9589,11 @@ private
     num.to_s.gsub(/(\d)(?=(\d{3})+(?!\d))/, '\1,') 
   end
 
+  def self.get_layout_path(filename)
+    spec = Gem::Specification.find_by_name("enju_trunk_statistics")
+    gem_root = spec.gem_dir
+    path = gem_root + "/app/layouts/#{filename}"
+    return path
+  end
 end
+
