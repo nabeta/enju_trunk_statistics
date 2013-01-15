@@ -80,8 +80,8 @@ class StatisticReportsController < ApplicationController
   end
 
   def get_timezone_report
-    start_at = params[:start_at].strip
-    end_at = params[:end_at].strip
+    start_at = params[:timezone_start_at].strip
+    end_at = params[:timezone_end_at].strip
     end_at = start_at if end_at.empty?
     unless (start_at =~ /^\d{8}$/ && end_at =~ /^\d{8}$/) && start_at.to_i <= end_at.to_i && term_valid?(start_at) && term_valid?(end_at)
       flash[:message] = t('statistic_report.invalid_month')
@@ -110,8 +110,8 @@ class StatisticReportsController < ApplicationController
   end
 
   def get_day_report
-    start_at = params[:start_at].strip
-    end_at = params[:end_at].strip
+    start_at = params[:day_start_at].strip
+    end_at = params[:day_end_at].strip
     end_at = start_at if end_at.empty?
     unless (start_at =~ /^\d{8}$/ && end_at =~ /^\d{8}$/) && start_at.to_i <= end_at.to_i && term_valid?(start_at) && term_valid?(end_at)
       flash[:message] = t('statistic_report.invalid_month')
@@ -140,8 +140,8 @@ class StatisticReportsController < ApplicationController
   end
 
   def get_age_report
-    start_at = params[:start_at].strip
-    end_at = params[:end_at].strip
+    start_at = params[:age_start_at].strip
+    end_at = params[:age_end_at].strip
     end_at = start_at if end_at.empty?
     unless (start_at =~ /^\d{8}$/ && end_at =~ /^\d{8}$/) && start_at.to_i <= end_at.to_i && term_valid?(start_at) && term_valid?(end_at)
       flash[:message] = t('statistic_report.invalid_month')
