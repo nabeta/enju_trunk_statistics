@@ -5,7 +5,7 @@ class Statistic < ActiveRecord::Base
   belongs_to :shelf
   belongs_to :user_group
   belongs_to :area
-  validates_uniqueness_of :data_type, :scope => [:yyyymm, :yyyymmdd, :library_id, :hour, :checkout_type_id, :shelf_id, :ndc, :call_number, :age, :option, :area_id, :user_type, :borrowing_library_id, :user_id, :user_group_id]
+  validates_uniqueness_of :data_type, :scope => [:yyyymm, :yyyymmdd, :library_id, :hour, :checkout_type_id, :shelf_id, :ndc, :call_number, :age, :option, :area_id, :user_type, :borrowing_library_id, :user_id, :user_group_id, :department_id]
   @libraries = Library.all
   @checkout_types = CheckoutType.all
   @shelves = Shelf.all
@@ -18,8 +18,9 @@ class Statistic < ActiveRecord::Base
   @children_ids = User.children.inject([]){|ids, user| ids << user.id}
   @librarian_ids = User.librarians.inject([]){|ids, user| ids << user.id}
   @corporate_user_ids = User.corporate.inject([]){|ids, user| ids << user.id}
+  @department_ids = Department.all.collect(&:id)
   before_validation :check_record
-  scope :no_condition, where(:checkout_type_id => nil, :shelf_id => nil, :ndc => nil, :call_number => nil, :age => nil, :option => 0, :area_id => nil, :user_type => nil, :user_id => nil)
+  scope :no_condition, where(:checkout_type_id => nil, :shelf_id => nil, :ndc => nil, :call_number => nil, :age => nil, :option => 0, :area_id => nil, :user_type => nil, :user_id => nil, :department_id => nil)
 
   def self.calc_users(start_at, end_at, term_id)
     Statistic.transaction do
@@ -990,6 +991,21 @@ class Statistic < ActiveRecord::Base
         statistic.save! if statistic.value > 0
       end 
     end
+    # monthly checkout items each departments
+    @department_ids.each do |id|
+      datas = Statistic.select(:value).where(:data_type=> 221, :yyyymm => month, :department_id => id)
+      value = 0
+      datas.each do |data|
+        value = value + data.value
+      end
+      statistic = Statistic.new
+      statistic.yyyymm = month
+      statistic.data_type = 121
+      statistic.department_id = id
+      statistic.value = value
+      statistic.save! if statistic.value > 0
+    end
+
 
     # average of checkout items each day 121 option: 4 
     date = Date.new(month[0, 4].to_i, month[4, 2].to_i) 
@@ -1067,6 +1083,20 @@ class Statistic < ActiveRecord::Base
         statistic.save! if statistic.value > 0
       end
     end 
+    # monthly checkout users each departments 122
+    @department_ids.each do |id|
+      datas = Statistic.select(:value).where(:data_type=> "222", :yyyymm => month, :department_id => id)
+      value = 0
+      datas.each do |data|
+        value = value + data.value
+      end
+      statistic = Statistic.new
+      statistic.yyyymm = month
+      statistic.data_type = 122
+      statistic.department_id = id
+      statistic.value = value
+      statistic.save! if statistic.value > 0
+    end
 
     # avarage of checkout users each day 122 option: 4
     date = Date.new(month[0, 4].to_i, month[4, 2].to_i) 
@@ -1317,6 +1347,16 @@ class Statistic < ActiveRecord::Base
         statistic.save! if statistic.value > 0
       end
     end
+    # daily checkout items each departments
+    @department_ids.each do |id|
+      statistic = Statistic.new
+      set_date(statistic, date_timestamp, 2)
+      statistic.data_type = 221
+      statistic.department_id = id
+      statistic.value = Checkout.count_by_sql(["select count(checkouts) from checkouts, users  where checkouts.user_id = users.id AND users.department_id = ? AND checkouts.created_at >= ? AND checkouts.created_at  < ?", id, Time.zone.parse(date).beginning_of_day, Time.zone.parse(date).end_of_day])
+      statistic.save! if statistic.value > 0
+    end
+
     # each ndc for report
 #    calc_ndc_checkouts(date_timestamp.beginning_of_month, date_timestamp.end_of_month, 2)
    
@@ -1375,6 +1415,17 @@ class Statistic < ActiveRecord::Base
         statistic.save! if statistic.value > 0
       end
     end 
+    # daily checkout users each departments 
+    @department_ids.each do |id|
+      statistic = Statistic.new
+      set_date(statistic, date_timestamp, 2)
+      statistic.data_type = 222
+      statistic.department_id = id
+      statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts, users  where checkouts.user_id = users.id AND users.department_id = ? AND checkouts.created_at >= ? AND checkouts.created_at  < ?", id, Time.zone.parse(date).beginning_of_day, Time.zone.parse(date).end_of_day])
+      statistic.save! if statistic.value > 0
+    end
+
+
     # daily checkin 251
     datas = Statistic.select(:value).where(:data_type=> '351', :yyyymmdd => date, :library_id => 0).no_condition
     value = 0
@@ -2298,7 +2349,7 @@ class Statistic < ActiveRecord::Base
   end
 
   def check_record
-    record = Statistic.where(:data_type => self.data_type, :yyyymmdd => self.yyyymmdd, :yyyymm => self.yyyymm, :library_id => self.library_id, :hour => self.hour, :checkout_type_id => self.checkout_type_id, :shelf_id => self.shelf_id, :ndc => self.ndc, :call_number => self.call_number, :age => self.age, :option => self.option, :area_id => self.area_id, :user_type => self.user_type, :user_id => self.user_id, :user_group_id => self.user_group_id).first
+    record = Statistic.where(:data_type => self.data_type, :yyyymmdd => self.yyyymmdd, :yyyymm => self.yyyymm, :library_id => self.library_id, :hour => self.hour, :checkout_type_id => self.checkout_type_id, :shelf_id => self.shelf_id, :ndc => self.ndc, :call_number => self.call_number, :age => self.age, :option => self.option, :area_id => self.area_id, :user_type => self.user_type, :user_id => self.user_id, :user_group_id => self.user_group_id, :department_id => self.department_id).first
     record.destroy if record
   end
   

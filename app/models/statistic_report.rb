@@ -9539,6 +9539,323 @@ class StatisticReport < ActiveRecord::Base
     return tsv_file
   end
 
+  def self.get_departments_monthly_pdf(term)
+    departments = Department.all
+    if departments.blank?
+      return false
+    end
+    dir_base = "#{Rails.root}/private/system"
+    begin
+      report = ThinReports::Report.new :layout => get_layout_path("departments_monthly")
+
+      report.events.on :page_create do |e|
+        e.page.item(:page).value(e.page.no)
+      end
+      report.events.on :generate do |e|
+        e.pages.each do |page|
+          page.item(:total).value(e.report.page_count)
+        end
+      end
+
+      report.start_new_page
+      report.page.item(:date).value(Time.now)       
+      report.page.item(:term).value(term)
+      # checkout items each departments
+      departments.each do |department|
+        report.page.list(:list).add_row do |row|
+          row.item(:type).value(I18n.t('statistic_report.checkout_items')) if department == departments.first
+          row.item(:department_name).value(department.display_name)   
+          sum = 0
+          12.times do |t|
+            if t < 4 # for Japanese fiscal year
+              value = Statistic.where(:yyyymm => "#{term.to_i + 1}#{"%02d" % (t + 1)}", :data_type => 121, :department_id => department.id).first.value rescue 0
+            else
+              value = Statistic.where(:yyyymm => "#{term}#{"%02d" % (t + 1)}", :data_type => 121, :department_id => department.id).first.value rescue 0
+            end
+            row.item("value#{t+1}").value(to_format(value))
+            sum = sum + value
+          end  
+          row.item("valueall").value(sum)
+          row.item(:department_line).show 
+          line(row) if department == departments.last
+        end
+      end
+      # checkout users each departments
+      departments.each do |department|
+        report.page.list(:list).add_row do |row|
+          row.item(:type).value(I18n.t('statistic_report.checkout_users')) if department == departments.first
+          row.item(:department_name).value(department.display_name)   
+          sum = 0
+          12.times do |t|
+            if t < 4 # for Japanese fiscal year
+              value = Statistic.where(:yyyymm => "#{term.to_i + 1}#{"%02d" % (t + 1)}", :data_type => 122, :department_id => department.id).first.value rescue 0
+            else
+              value = Statistic.where(:yyyymm => "#{term}#{"%02d" % (t + 1)}", :data_type => 122, :department_id => department.id).first.value rescue 0
+            end
+            row.item("value#{t+1}").value(to_format(value))
+            sum = sum + value
+          end  
+          row.item("valueall").value(sum)
+          row.item(:department_line).show 
+        end
+      end
+      return report.generate
+    rescue Exception => e
+      logger.error "failed #{e}"
+      logger.error $@.join('\n')
+      return false
+    end	
+  end
+
+  def self.get_departments_monthly_tsv(term)
+    departments = Department.all
+    if departments.blank?
+      return false
+    end
+    dir_base = "#{Rails.root}/private/system"
+    out_dir = "#{dir_base}/statistic_report/"
+    tsv_file = out_dir + "#{term}_departments_monthly.tsv"
+    FileUtils.mkdir_p(out_dir) unless FileTest.exist?(out_dir)
+    # header
+    columns = [
+      [:type,'statistic_report.type'],
+      [:department_name, 'statistic_report.department_name']
+    ]
+    File.open(tsv_file, "w") do |output|
+      # add UTF-8 BOM for excel
+      output.print "\xEF\xBB\xBF".force_encoding("UTF-8")
+
+      # タイトル行
+      row = []
+      columns.each do |column|
+        row << I18n.t(column[1])
+      end
+      9.times do |t|
+        row << I18n.t('statistic_report.month', :num => t+4)
+        columns << ["#{term}#{"%02d" % (t + 4)}"]
+      end
+      3.times do |t|
+        row << I18n.t('statistic_report.month', :num => t+1)
+        columns << ["#{term.to_i + 1}#{"%02d" % (t + 1)}"]
+      end
+      row << I18n.t('statistic_report.sum')
+      columns << ["sum"]
+      output.print "\""+row.join("\"\t\"")+"\"\n"
+
+      corporates = User.corporate
+      # checkout items each departments
+      departments.each do |department|
+        sum = 0
+        row = []
+        columns.each do |column|
+          case column[0]
+          when :type
+            row << I18n.t('statistic_report.checkout_items')
+          when :department_name
+            row << department.display_name
+          when "sum"
+            row << to_format(sum)
+          else
+            value = Statistic.where(:yyyymm => column[0], :data_type => 121, :department_id => department.id).first.value rescue 0
+            sum += value
+            row << to_format(value)
+          end  
+        end
+        output.print "\""+row.join("\"\t\"")+"\"\n"
+      end
+      # checkout users each departments
+      departments.each do |department|
+        sum = 0
+        row = []
+        columns.each do |column|
+          case column[0]
+          when :type
+            row << I18n.t('statistic_report.checkout_users')
+          when :department_name
+            row << department.display_name
+          when "sum"
+            row << to_format(sum)
+          else
+            value = Statistic.where(:yyyymm => column[0], :data_type => 122, :department_id => department.id).first.value rescue 0
+            sum += value
+            row << to_format(value)
+          end  
+        end
+        output.print "\""+row.join("\"\t\"")+"\"\n"
+      end
+    end
+    return tsv_file
+  end
+
+  def self.get_departments_daily_pdf(term)
+    departments = Department.all
+    if departments.blank?
+      return false
+    end
+    begin
+      report = ThinReports::Report.new :layout => get_layout_path("departments_daily")
+      report.events.on :page_create do |e|
+        e.page.item(:page).value(e.page.no)
+      end
+      report.events.on :generate do |e|
+        e.pages.each do |page|
+          page.item(:total).value(e.report.page_count)
+        end
+      end
+
+      num_for_last_page = Time.zone.parse("#{term}01").end_of_month.strftime("%d").to_i - 26
+      [1,14,27].each do |start_date| # for 3 pages
+        report.start_new_page
+        report.page.item(:date).value(Time.now)
+        report.page.item(:year).value(term[0,4])
+        report.page.item(:month).value(term[4,6])        
+        # header
+        if start_date != 27
+          13.times do |t|
+            report.page.list(:list).header.item("column##{t+1}").value(I18n.t('statistic_report.date', :num => t+start_date))
+          end
+        else
+          num_for_last_page.times do |t|
+            report.page.list(:list).header.item("column##{t+1}").value(I18n.t('statistic_report.date', :num => t+start_date))
+          end
+          report.page.list(:list).header.item("column#13").value(I18n.t('statistic_report.sum'))
+        end
+
+        # checkout items each departments
+        departments.each do |department|
+          report.page.list(:list).add_row do |row|
+            row.item(:type).value(I18n.t('statistic_report.checkout_items')) if department == departments.first
+            row.item(:department_name).value(department.display_name)   
+            if start_date != 27
+              13.times do |t|
+                value = Statistic.where(:yyyymmdd => "#{term.to_i}#{"%02d" % (t + start_date)}", :data_type => 221, :department_id => department.id).first.value rescue 0
+                row.item("value##{t+1}").value(to_format(value))
+              end
+            else
+              num_for_last_page.times do |t|
+                value = Statistic.where(:yyyymmdd => "#{term.to_i}#{"%02d" % (t + start_date)}", :data_type => 221, :department_id => department.id).first.value rescue 0
+                row.item("value##{t+1}").value(to_format(value))
+              end
+              sum = 0
+              datas = Statistic.where(:yyyymm => term, :data_type => 221, :department_id => department.id)
+              datas.each do |data|
+                sum = sum + data.value
+              end
+              row.item("value#13").value(sum)
+            end
+            row.item(:library_line).show
+            line(row) if department == departments.last
+          end
+        end
+        # checkout users each departments
+        departments.each do |department|
+          report.page.list(:list).add_row do |row|
+            row.item(:type).value(I18n.t('statistic_report.checkout_users')) if department == departments.first
+            row.item(:department_name).value(department.display_name)   
+            if start_date != 27
+              13.times do |t|
+                value = Statistic.where(:yyyymmdd => "#{term.to_i}#{"%02d" % (t + start_date)}", :data_type => 222, :department_id => department.id).first.value rescue 0
+                row.item("value##{t+1}").value(to_format(value))
+              end
+            else
+              num_for_last_page.times do |t|
+                value = Statistic.where(:yyyymmdd => "#{term.to_i}#{"%02d" % (t + start_date)}", :data_type => 222, :department_id => department.id).first.value rescue 0
+                row.item("value##{t+1}").value(to_format(value))
+              end
+              sum = 0
+              datas = Statistic.where(:yyyymm => term, :data_type => 222, :department_id => department.id)
+              datas.each do |data|
+                sum = sum + data.value
+              end
+              row.item("value#13").value(sum)
+              row.item(:library_line).show
+            end
+          end
+        end
+      end
+      return report.generate
+    rescue Exception => e
+      logger.error "failed #{e}"
+      return false
+    end
+  end
+
+  def self.get_departments_daily_tsv(term)
+    departments = Department.all
+    if departments.blank?
+      return false
+    end
+    dir_base = "#{Rails.root}/private/system"
+    out_dir = "#{dir_base}/statistic_report/"
+    tsv_file = out_dir + "#{term}_departments_daily.tsv"
+    FileUtils.mkdir_p(out_dir) unless FileTest.exist?(out_dir)
+    days = Time.zone.parse("#{term}01").end_of_month.strftime("%d").to_i
+    # header
+    columns = [
+      [:type,'statistic_report.type'],
+      [:department_name, 'statistic_report.department_name']
+    ]
+    File.open(tsv_file, "w") do |output|
+      # add UTF-8 BOM for excel
+      output.print "\xEF\xBB\xBF".force_encoding("UTF-8")
+
+      # タイトル行
+      row = []
+      columns.each do |column|
+        row << I18n.t(column[1])
+      end
+      days.times do |t|
+        row << I18n.t('statistic_report.date', :num => t+1)
+        columns << ["#{term}#{"%02d" % (t + 1)}"]
+      end
+      row << I18n.t('statistic_report.sum')
+      columns << ["sum"]
+      output.print "\""+row.join("\"\t\"")+"\"\n"
+
+      # checkout items each departments
+      departments.each do |department|
+        sum = 0
+        row = []
+        columns.each do |column|
+          case column[0]
+          when :type
+            row << I18n.t('statistic_report.checkout_items')
+          when :department_name
+            row << department.display_name
+          when "sum"
+            row << to_format(sum)
+          else
+            value = Statistic.where(:yyyymmdd => column[0], :data_type => 221, :department_id => department.id).first.value rescue 0
+            sum += value
+            row << to_format(value)
+          end
+        end  
+        output.print "\""+row.join("\"\t\"")+"\"\n"
+      end
+      # checkout users each departments
+      departments.each do |department|
+        sum = 0
+        row = []
+        columns.each do |column|
+          case column[0]
+          when :type
+            row << I18n.t('statistic_report.checkout_users')
+          when :department_name
+            row << department.display_name
+          when "sum"
+            row << to_format(sum)
+          else
+            value = Statistic.where(:yyyymmdd => column[0], :data_type => 222, :department_id => department.id).first.value rescue 0
+            sum += value
+            row << to_format(value)
+          end
+        end  
+        output.print "\""+row.join("\"\t\"")+"\"\n"
+      end
+    end
+    return tsv_file
+  end
+
 private
   def self.line(row)
     row.item(:type_line).show
