@@ -5,28 +5,56 @@ class Statistic < ActiveRecord::Base
   belongs_to :shelf
   belongs_to :user_group
   belongs_to :area
-  validates_uniqueness_of :data_type, :scope => [:yyyymm, :yyyymmdd, :library_id, :hour, :checkout_type_id, :shelf_id, :ndc, :call_number, :age, :option, :area_id, :user_type, :borrowing_library_id, :user_id, :user_group_id, :department_id]
-  @libraries = Library.all
+  validates_uniqueness_of :data_type, :scope => [:yyyymm, :yyyymmdd, :library_id, :hour, :checkout_type_id, :shelf_id, :ndc, :call_number, :age, :option, :area_id, :user_type, :borrowing_library_id, :user_id, :user_group_id, :department_id, :manifestation_type_id, :user_status_id]
+  @libraries = Library.all 
   @checkout_types = CheckoutType.all
   @shelves = Shelf.all
   @user_groups = UserGroup.all
-  @areas = Area.all
-  @adult_ids = User.adults.inject([]){|ids, user| ids << user.id}
-  @student_ids = User.students.inject([]){|ids, user| ids << user.id}
-  @junior_ids = User.juniors.inject([]){|ids, user| ids << user.id}
-  @elementary_ids = User.elementaries.inject([]){|ids, user| ids << user.id}
-  @children_ids = User.children.inject([]){|ids, user| ids << user.id}
-  @librarian_ids = User.librarians.inject([]){|ids, user| ids << user.id}
-  @corporate_user_ids = User.corporate.inject([]){|ids, user| ids << user.id}
-  @department_ids = Department.all.collect(&:id)
+  @areas = Area.all || []
+  @adult_ids = User.adults.inject([]){|ids, user| ids << user.id} || []
+  @student_ids = User.students.inject([]){|ids, user| ids << user.id} || []
+  @junior_ids = User.juniors.inject([]){|ids, user| ids << user.id} || []
+  @elementary_ids = User.elementaries.inject([]){|ids, user| ids << user.id} || []
+  @children_ids = User.children.inject([]){|ids, user| ids << user.id} || []
+  @librarian_ids = User.librarians.inject([]){|ids, user| ids << user.id} || []
+  @corporate_user_ids = User.corporate.inject([]){|ids, user| ids << user.id} || []
+  @department_ids = Department.all.collect(&:id) || []
+  @user_status_ids = UserStatus.all.collect(&:id) || []
+  @manifestation_type_ids = ManifestationType.all.collect(&:id) || []
   before_validation :check_record
-  scope :no_condition, where(:checkout_type_id => nil, :shelf_id => nil, :ndc => nil, :call_number => nil, :age => nil, :option => 0, :area_id => nil, :user_type => nil, :user_id => nil, :department_id => nil)
+  scope :no_condition, where(:checkout_type_id => nil, :shelf_id => nil, :ndc => nil, :call_number => nil, :age => nil, :option => 0, :area_id => nil, :user_type => nil, :user_id => nil, :department_id => nil, :manifestation_type_id => nil, :user_status_id => nil)
 
   def self.calc_users(start_at, end_at, term_id)
     Statistic.transaction do
-#      p "statistics of users  #{start_at} - #{end_at}"
+      p "statistics of users  #{start_at} - #{end_at}"
 
       data_type = term_id.to_s + 12.to_s
+      
+      # all users
+      statistic = Statistic.new
+      set_date(statistic, end_at, term_id)
+      statistic.data_type = data_type
+      statistic.value = User.count_by_sql(["select count(*) from users where created_at >= ? AND created_at  < ?", start_at, end_at])
+      # users each departments
+      @department_ids.each do |id|
+        statistic = Statistic.new
+        set_date(statistic, end_at, term_id)
+        statistic.data_type = data_type
+        statistic.department_id = id
+        statistic.value = User.count_by_sql(["select count(*) from users where department_id = ? AND created_at >= ? AND created_at  < ?", id, start_at, end_at])
+        statistic.save! if statistic.value > 0
+      end
+      # users each user_statuses
+      @user_status_ids.each do |id|
+        statistic = Statistic.new
+        set_date(statistic, end_at, term_id)
+        statistic.data_type = data_type
+        statistic.user_status_id = id
+        statistic.value = User.count_by_sql(["select count(*) from users where user_status_id = ? AND created_at >= ? AND created_at  < ?", id, start_at, end_at])
+        statistic.save! if statistic.value > 0        
+      end
+
+=begin
       # users 12 option 0
       statistic = Statistic.new
       set_date(statistic, end_at, term_id)
@@ -85,7 +113,7 @@ class Statistic < ActiveRecord::Base
       statistic.user_type = 1
       statistic.value = User.count_by_sql(["select count(*) from users where id IN (?) AND created_at >= ? AND created_at  < ?", @children_ids, start_at, end_at])
       statistic.save! if statistic.value > 0
-
+=end
       @libraries.each do |library|
         # users 12 option 0
         statistic = Statistic.new
@@ -95,6 +123,28 @@ class Statistic < ActiveRecord::Base
         statistic.option = 0
         statistic.value = User.count_by_sql(["select count(*) from users, libraries where users.library_id = libraries.id AND libraries.id = ? AND users.created_at >= ? AND users.created_at < ?", library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
+        # users each departments
+        @department_ids.each do |id|
+          statistic = Statistic.new
+          set_date(statistic, end_at, term_id)
+          statistic.data_type = data_type
+          statistic.library_id = library.id
+          statistic.department_id = id
+          statistic.value = User.count_by_sql(["select count(*) from users, libraries where users.library_id = libraries.id AND libraries.id = ? AND users.department_id = ? AND users.created_at >= ? AND users.created_at < ?", library.id, id, start_at, end_at])
+          statistic.save! if statistic.value > 0
+        end
+        @user_status_ids.each do |id|
+          statistic = Statistic.new
+          set_date(statistic, end_at, term_id)
+          statistic.data_type = data_type
+          statistic.library_id = library.id
+          statistic.user_status_id = id
+          statistic.value = User.count_by_sql(["select count(users) from users, libraries where users.library_id = libraries.id AND libraries.id = ? AND users.user_status_id = ? AND users.created_at >= ? AND users.created_at < ?", library.id, id, start_at, end_at])
+          p "********** #{library.display_name.localize} / #{id}: #{statistic.value}"
+          statistic.save! if statistic.value > 0
+        end 
+      end
+=begin
         # users 12 available option 1
         statistic = Statistic.new
         set_date(statistic, end_at, term_id)
@@ -156,6 +206,7 @@ class Statistic < ActiveRecord::Base
         statistic.value = User.count_by_sql(["select count(*) from users, libraries where users.library_id = libraries.id AND libraries.id = ? AND users.id IN (?) AND users.created_at >= ? AND users.created_at < ?", library.id, @children_ids, start_at, end_at])
         statistic.save! if statistic.value > 0
       end
+=end
     end
     rescue Exception => e
       p "Failed to calculate users: #{e}"
@@ -164,16 +215,29 @@ class Statistic < ActiveRecord::Base
 
   def self.calc_items(start_at, end_at, term_id)
     Statistic.transaction do
-#     p "statistics of items  #{start_at} - #{end_at}"
+     p "statistics of items  #{start_at} - #{end_at}"
       @call_numbers = call_numbers
 
-      # items 11
       data_type = term_id.to_s + 11.to_s
+
+      # all items
       statistic = Statistic.new
       set_date(statistic, end_at, term_id)
       statistic.data_type = data_type
       statistic.value = Item.count_by_sql(["select count(*) from items where created_at >= ? AND created_at  < ?", start_at, end_at])
       statistic.save! if statistic.value > 0
+
+      # items each manifestation_types
+      @manifestation_type_ids.each do |id|
+        statistic = Statistic.new
+        set_date(statistic, end_at, term_id)
+        statistic.data_type = data_type
+        statistic.manifestation_type_id = id
+        statistic.value = Item.count_by_sql(["select count(items) from items, exemplifies, manifestations where items.id = exemplifies.item_id AND manifestations.id = exemplifies.manifestation_id AND manifestations.manifestation_type_id = ? AND items.created_at >= ? AND items.created_at  < ?", id, start_at, end_at])
+        statistic.save! if statistic.value > 0        
+      end
+      
+=begin
       # items each checkout types
       @checkout_types.each do |checkout_type|
         statistic = Statistic.new
@@ -213,6 +277,16 @@ class Statistic < ActiveRecord::Base
           statistic.value = Item.count_by_sql(["select count(items) from items, shelves, libraries where items.shelf_id = shelves.id AND libraries.id = shelves.library_id AND libraries.id = ? AND items.checkout_type_id = ? AND items.created_at >= ? AND items.created_at < ?", library.id, checkout_type.id, start_at, end_at])
           statistic.save! if statistic.value > 0
         end
+        # items each manifestation_types
+        @manifestation_type_ids.each do |id|
+          statistic = Statistic.new
+          set_date(statistic, end_at, term_id)
+          statistic.data_type = data_type
+          statistic.library = library
+          statistic.manifestation_type_id = id
+          statistic.value = Item.count_by_sql(["select count(items) from items, exemplifies, manifestations, shelves, libraries where items.shelf_id = shelves.id AND libraries.id = shelves.library_id AND libraries.id = ? AND items.id = exemplifies.item_id AND manifestations.id = exemplifies.manifestation_id AND manifestations.manifestation_type_id = ? AND items.created_at >= ? AND items.created_at  < ?", library.id, id, start_at, end_at])
+          statistic.save! if statistic.value > 0        
+        end
         # items each shelves
         @shelves.each do |shelf|
           statistic = Statistic.new
@@ -238,6 +312,7 @@ class Statistic < ActiveRecord::Base
           end
         end
       end
+=end
     end
     rescue Exception => e
       s = "Failed to calculate items: #{e}"
@@ -420,6 +495,7 @@ class Statistic < ActiveRecord::Base
       statistic.option = 1
       statistic.value = Item.count_by_sql(["select count(*) from items where circulation_status_id IN (?) AND created_at >= ? AND created_at  < ?", missing_state_ids, start_at, end_at])
       statistic.save! if statistic.value > 0
+=begin
       # each libraries
       @libraries.each do |library|
         statistic = Statistic.new
@@ -430,7 +506,7 @@ class Statistic < ActiveRecord::Base
         statistic.value = statistic.value = Item.count_by_sql(["select count(items) from items, shelves, libraries where items.shelf_id = shelves.id AND libraries.id = shelves.library_id AND items.circulation_status_id IN (?) AND libraries.id = ? AND items.created_at >= ? AND items.created_at < ?", missing_state_ids, library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
       end
-
+=end
     end
     rescue Exception => e
       p "Failed to calculate missing items: #{e}"
@@ -500,11 +576,11 @@ class Statistic < ActiveRecord::Base
     end
   end
 
-  def self.calc_checkouts(start_at, end_at, term_id)
+  def self.calc_checkouts(start_at, end_at, term_id)   
     Statistic.transaction do
-#      p "statistics of checkouts  #{start_at} - #{end_at}"
+      p "statistics of checkouts  #{start_at} - #{end_at}"
 
-      # checkout items 21
+      # checkout items
       data_type = term_id.to_s + 21.to_s   
       statistic = Statistic.new
       set_date(statistic, start_at, term_id)
@@ -529,6 +605,17 @@ class Statistic < ActiveRecord::Base
         statistic.value = Checkout.count_by_sql(["select count(checkouts) from checkouts where user_id = ? AND created_at >= ? AND created_at < ? ", id, start_at, end_at])
         statistic.save! if statistic.value > 0
       end
+      # checkout items each manifestation_types
+      @manifestation_type_ids.each do |id|
+        statistic = Statistic.new
+        set_date(statistic, start_at, term_id)
+        statistic.data_type = data_type
+        statistic.manifestation_type_id = id
+        statistic.value = Checkout.count_by_sql(["select count(checkouts) from checkouts, items, manifestations, exemplifies where checkouts.item_id = items.id AND items.id = exemplifies.item_id AND manifestations.id = exemplifies.manifestation_id AND manifestations.manifestation_type_id = ? AND checkouts.created_at >= ? AND checkouts.created_at < ? ", id, start_at, end_at])
+        statistic.save! if statistic.value > 0
+      end
+
+=begin
       # NDC for all option: 1 (ndc starts a number)
       statistic = Statistic.new
       set_date(statistic, start_at, term_id)
@@ -553,7 +640,7 @@ class Statistic < ActiveRecord::Base
       sql = "select count(checkouts) from checkouts, items, exemplifies, manifestations where checkouts.item_id = items.id AND exemplifies.item_id = items.id AND exemplifies.manifestation_id = manifestations.id AND (manifestations.ndc ~ '^[^KEC0-9]' OR manifestations.ndc IS NULL) AND checkouts.created_at >= ? AND checkouts.created_at < ?"
       statistic.value = Checkout.count_by_sql([ sql, start_at, end_at])
       statistic.save! if statistic.value > 0
-    
+=end    
       @libraries.each do |library|
         statistic = Statistic.new
         set_date(statistic, start_at, term_id)
@@ -561,6 +648,8 @@ class Statistic < ActiveRecord::Base
         statistic.library_id = library.id
         statistic.value = Checkout.count_by_sql(["select count(*) from checkouts, users, libraries where checkouts.librarian_id = users.id AND users.library_id= libraries.id AND libraries.id = ? AND checkouts.created_at >= ? AND checkouts.created_at < ?", library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
+      end
+=begin
         # each user_groups
         @user_groups.each do |user_group|
           statistic = Statistic.new
@@ -599,6 +688,7 @@ class Statistic < ActiveRecord::Base
         statistic.value = Checkout.count_by_sql([ sql, library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
       end
+=end
 
       # checkout users 22
       data_type = term_id.to_s + 22.to_s
@@ -607,6 +697,18 @@ class Statistic < ActiveRecord::Base
       statistic.data_type = data_type
       statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts where created_at >= ? AND created_at  < ?", start_at, end_at])
       statistic.save! if statistic.value > 0
+
+      # checkout users each departments
+      @department_ids.each do |id|
+        statistic = Statistic.new
+        set_date(statistic, start_at, term_id)
+        statistic.data_type = data_type
+        statistic.department_id = id
+        statistic.value = Checkout.count_by_sql(["select count(distinct checkouts.user_id) from checkouts, users where checkouts.user_id = users.id AND users.department_id = ? AND checkouts.created_at >= ? AND checkouts.created_at  < ?", id, start_at, end_at])
+        statistic.save! if statistic.value > 0
+      end
+
+=begin
       # checkout each user_type
       statistic = Statistic.new
       set_date(statistic, start_at, term_id)
@@ -637,8 +739,8 @@ class Statistic < ActiveRecord::Base
       statistic.data_type = data_type
       statistic.user_type = 1
       statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts where user_id IN (?) AND created_at >= ? AND created_at  < ?", @children_ids, start_at, end_at])
-      statistic.save! if statistic.value > 0
- 
+      statistic.save! if statistic.value > 0 =end
+=end
       @libraries.each do |library|
         statistic = Statistic.new
         set_date(statistic, start_at, term_id)
@@ -646,6 +748,8 @@ class Statistic < ActiveRecord::Base
         statistic.library_id = library.id
         statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts, users, libraries where checkouts.librarian_id = users.id AND users.library_id= libraries.id AND libraries.id = ? AND checkouts.created_at >= ? AND checkouts.created_at < ?", library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
+      end
+=begin
         # checkout each user_type
         statistic = Statistic.new
         set_date(statistic, start_at, term_id)
@@ -683,6 +787,7 @@ class Statistic < ActiveRecord::Base
         statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts, users, libraries where checkouts.librarian_id = users.id AND users.library_id= libraries.id AND user_id IN (?) AND libraries.id = ? AND checkouts.created_at >= ? AND checkouts.created_at < ?", @children_ids, library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
       end
+=end
     end
     rescue Exception => e
       p "Failed to calculate checkouts statistics: #{e}"
@@ -804,6 +909,7 @@ class Statistic < ActiveRecord::Base
       statistic.value = Reserve.count_by_sql(["select count(*) from reserves where created_at >= ? AND created_at  < ? AND created_by NOT IN (?)", start_at, end_at, @librarian_ids])
       statistic.save! if statistic.value > 0
 
+=begin
       @libraries.each do |library|
         statistic = Statistic.new
         set_date(statistic, start_at, term_id)
@@ -828,6 +934,7 @@ class Statistic < ActiveRecord::Base
         statistic.value = Reserve.count_by_sql(["select count(*) from reserves, libraries where libraries.id = reserves.receipt_library_id AND libraries.id = ? AND reserves.created_at >= ? AND reserves.created_at < ? AND reserves.created_by NOT IN (?)", library.id, start_at, end_at, @librarian_ids])
         statistic.save! if statistic.value > 0
       end
+=end
     end
     rescue Exception => e
       p "Failed to calculate reserves statistics: #{e}"
@@ -917,7 +1024,7 @@ class Statistic < ActiveRecord::Base
       statistic.value = c
       statistic.save!
     end
-
+=begin
     # monthly checkout items 121, option 0-3
     4.times do |i|
       data_type = 21
@@ -1269,6 +1376,7 @@ class Statistic < ActiveRecord::Base
       statistic.value = value
       statistic.save! if statistic.value > 0
     end
+=end
   end
 
   def self.calc_daily_data(date)
@@ -1347,20 +1455,11 @@ class Statistic < ActiveRecord::Base
         statistic.save! if statistic.value > 0
       end
     end
-    # daily checkout items each departments
-    @department_ids.each do |id|
-      statistic = Statistic.new
-      set_date(statistic, date_timestamp, 2)
-      statistic.data_type = 221
-      statistic.department_id = id
-      statistic.value = Checkout.count_by_sql(["select count(checkouts) from checkouts, users  where checkouts.user_id = users.id AND users.department_id = ? AND checkouts.created_at >= ? AND checkouts.created_at  < ?", id, Time.zone.parse(date).beginning_of_day, Time.zone.parse(date).end_of_day])
-      statistic.save! if statistic.value > 0
-    end
 
     # each ndc for report
 #    calc_ndc_checkouts(date_timestamp.beginning_of_month, date_timestamp.end_of_month, 2)
    
- 
+=begin 
     # daily checkout users 222
     datas = Statistic.select(:value).where(:data_type=> "322", :yyyymmdd => date, :library_id => 0, :age => nil).no_condition
     value = 0
@@ -1415,16 +1514,19 @@ class Statistic < ActiveRecord::Base
         statistic.save! if statistic.value > 0
       end
     end 
+=end
     # daily checkout users each departments 
-    @department_ids.each do |id|
-      statistic = Statistic.new
-      set_date(statistic, date_timestamp, 2)
-      statistic.data_type = 222
-      statistic.department_id = id
-      statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts, users  where checkouts.user_id = users.id AND users.department_id = ? AND checkouts.created_at >= ? AND checkouts.created_at  < ?", id, Time.zone.parse(date).beginning_of_day, Time.zone.parse(date).end_of_day])
-      statistic.save! if statistic.value > 0
+    @libraries.each do |library|
+      @department_ids.each do |id|
+        statistic = Statistic.new
+        set_date(statistic, date_timestamp, 2)
+        statistic.data_type = 222
+        statistic.library = library
+        statistic.department_id = id
+        statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts, users  where checkouts.user_id = users.id AND users.department_id = ? AND users.library_id = ? AND checkouts.created_at >= ? AND checkouts.created_at  < ?", id, library.id, Time.zone.parse(date).beginning_of_day, Time.zone.parse(date).end_of_day])
+        statistic.save! if statistic.value > 0
+      end
     end
-
 
     # daily checkin 251
     datas = Statistic.select(:value).where(:data_type=> '351', :yyyymmdd => date, :library_id => 0).no_condition
@@ -2306,13 +2408,17 @@ class Statistic < ActiveRecord::Base
       date_timestamp =  Time.zone.parse("#{date}01")
       calc_users(Time.new('1970-01-01'), date_timestamp.end_of_month, 1)
       calc_items(Time.new('1970-01-01'), date_timestamp.end_of_month, 1)
-      calc_ndc_checkouts(Time.new('1970-01-01'), date_timestamp.end_of_month, 1)
+#      calc_ndc_checkouts(Time.new('1970-01-01'), date_timestamp.end_of_month, 1)
       calc_missing_items(Time.new('1970-01-01'), date_timestamp.end_of_month, 1)
       calc_consultations(date_timestamp.beginning_of_month, date_timestamp.end_of_month, 1)      
-      calc_inout_items(date_timestamp.beginning_of_month, date_timestamp.end_of_month, 1)
+#      calc_inout_items(date_timestamp.beginning_of_month, date_timestamp.end_of_month, 1)
       calc_library_use(date_timestamp.beginning_of_month, date_timestamp.end_of_month, 1)
-      calc_loans(date_timestamp.beginning_of_month, date_timestamp.end_of_month, 1)
+#      calc_loans(date_timestamp.beginning_of_month, date_timestamp.end_of_month, 1)
       calc_reminders(date_timestamp.beginning_of_month, date_timestamp.end_of_month, 1)
+      calc_checkouts(date_timestamp.beginning_of_month, date_timestamp.end_of_month, 1)
+      calc_checkins(date_timestamp.beginning_of_month, date_timestamp.end_of_month, 1)
+      calc_reserves(date_timestamp.beginning_of_month, date_timestamp.end_of_month, 1)
+      calc_questions(date_timestamp.beginning_of_month, date_timestamp.end_of_month, 1)
       calc_monthly_data(date)
     else # daily calculate data each hour
       if date
@@ -2326,8 +2432,9 @@ class Statistic < ActiveRecord::Base
       end
       i = 0
       calc_items(Time.new('1970-01-01'), date.end_of_day, 2)
-      calc_ndc_checkouts(Time.new('1970-01-01'), date.end_of_day, 2)
+#      calc_ndc_checkouts(Time.new('1970-01-01'), date.end_of_day, 2)
       calc_missing_items(Time.new('1970-01-01'), date.end_of_day, 2)
+=begin
       while i < 24 #  0 ~ 24 hour
         calc_checkouts(date.change(:hour => i), date.change(:hour => i + 1), 3)
         calc_checkins(date.change(:hour => i), date.change(:hour => i + 1), 3)
@@ -2335,12 +2442,17 @@ class Statistic < ActiveRecord::Base
         calc_questions(date.change(:hour => i), date.change(:hour => i + 1), 3)
         i += 1
       end
+=end
       calc_consultations(date.beginning_of_day, date.end_of_day, 2)
-      calc_age_data(date.beginning_of_day, date.end_of_day, 2)
-      calc_inout_items(date.beginning_of_day, date.end_of_day, 2)
-      calc_loans(date.beginning_of_day, date.end_of_day, 2)
+#      calc_age_data(date.beginning_of_day, date.end_of_day, 2) if SystemConfiguration.get('use_birth_day')
+#      calc_inout_items(date.beginning_of_day, date.end_of_day, 2)
+#      calc_loans(date.beginning_of_day, date.end_of_day, 2)
       calc_reminders(date.beginning_of_day, date.end_of_day, 2)
-      calc_daily_data(date.strftime("%Y%m%d"))
+      calc_checkouts(date.beginning_of_day, date.end_of_day, 2)
+      calc_checkins(date.beginning_of_day, date.end_of_day, 2)
+      calc_reserves(date.beginning_of_day, date.end_of_day, 2)
+      calc_questions(date.beginning_of_day, date.end_of_day, 2)
+#      calc_daily_data(date.strftime("%Y%m%d"))
     end
     rescue Exception => e
       p "Failed to start calculation: #{e}"
@@ -2349,7 +2461,7 @@ class Statistic < ActiveRecord::Base
   end
 
   def check_record
-    record = Statistic.where(:data_type => self.data_type, :yyyymmdd => self.yyyymmdd, :yyyymm => self.yyyymm, :library_id => self.library_id, :hour => self.hour, :checkout_type_id => self.checkout_type_id, :shelf_id => self.shelf_id, :ndc => self.ndc, :call_number => self.call_number, :age => self.age, :option => self.option, :area_id => self.area_id, :user_type => self.user_type, :user_id => self.user_id, :user_group_id => self.user_group_id, :department_id => self.department_id).first
+    record = Statistic.where(:data_type => self.data_type, :yyyymmdd => self.yyyymmdd, :yyyymm => self.yyyymm, :library_id => self.library_id, :hour => self.hour, :checkout_type_id => self.checkout_type_id, :shelf_id => self.shelf_id, :ndc => self.ndc, :call_number => self.call_number, :age => self.age, :option => self.option, :area_id => self.area_id, :user_type => self.user_type, :user_id => self.user_id, :user_group_id => self.user_group_id, :department_id => self.department_id, :manifestation_type_id => self.manifestation_type_id, :user_status_id => self.user_status_id).first
     record.destroy if record
   end
   

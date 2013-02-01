@@ -14,6 +14,7 @@ class StatisticReportsController < ApplicationController
     @inout_term = Time.zone.now.years_ago(1).strftime("%Y")
     @loans_term = Time.zone.now.years_ago(1).strftime("%Y")
     @group_term = Time.zone.now.years_ago(1).strftime("%Y")
+    @dep_term = Time.zone.now.years_ago(1).strftime("%Y")
   end
 
   # check role
@@ -39,6 +40,7 @@ class StatisticReportsController < ApplicationController
       @inout_term = Time.zone.now.years_ago(1).strftime("%Y")
       @loans_term = Time.zone.now.years_ago(1).strftime("%Y")
       @group_term = Time.zone.now.years_ago(1).strftime("%Y")
+      @dep_term = Time.zone.now.years_ago(1).strftime("%Y")
       render :index
       return false
     end
@@ -67,6 +69,7 @@ class StatisticReportsController < ApplicationController
       @inout_term = Time.zone.now.years_ago(1).strftime("%Y")
       @loans_term = Time.zone.now.years_ago(1).strftime("%Y")
       @group_term = Time.zone.now.years_ago(1).strftime("%Y")
+      @dep_term = Time.zone.now.years_ago(1).strftime("%Y")
       render :index
       return false
     end
@@ -97,6 +100,7 @@ class StatisticReportsController < ApplicationController
       @inout_term = Time.zone.now.years_ago(1).strftime("%Y")
       @loans_term = Time.zone.now.years_ago(1).strftime("%Y")
       @group_term = Time.zone.now.years_ago(1).strftime("%Y")
+      @dep_term = Time.zone.now.years_ago(1).strftime("%Y")
       render :index
       return false
     end
@@ -127,6 +131,7 @@ class StatisticReportsController < ApplicationController
       @inout_term = Time.zone.now.years_ago(1).strftime("%Y")
       @loans_term = Time.zone.now.years_ago(1).strftime("%Y")
       @group_term = Time.zone.now.years_ago(1).strftime("%Y")
+      @dep_term = Time.zone.now.years_ago(1).strftime("%Y")
       render :index
       return false
     end
@@ -157,6 +162,7 @@ class StatisticReportsController < ApplicationController
       @inout_term = Time.zone.now.years_ago(1).strftime("%Y")
       @loans_term = Time.zone.now.years_ago(1).strftime("%Y")
       @group_term = Time.zone.now.years_ago(1).strftime("%Y")
+      @dep_term = Time.zone.now.years_ago(1).strftime("%Y")
       render :index
       return false
     end
@@ -185,6 +191,7 @@ class StatisticReportsController < ApplicationController
       @inout_term = Time.zone.now.years_ago(1).strftime("%Y")
       @loans_term = Time.zone.now.years_ago(1).strftime("%Y")
       @group_term = Time.zone.now.years_ago(1).strftime("%Y")
+      @dep_term = Time.zone.now.years_ago(1).strftime("%Y")
       render :index
       return false
     end
@@ -223,6 +230,7 @@ class StatisticReportsController < ApplicationController
       @inout_term = term
       @loans_term = Time.zone.now.years_ago(1).strftime("%Y")
       @group_term = Time.zone.now.years_ago(1).strftime("%Y")
+      @dep_term = Time.zone.now.years_ago(1).strftime("%Y")
       render :index
       return false
     end
@@ -261,6 +269,7 @@ class StatisticReportsController < ApplicationController
       @inout_term = Time.zone.now.years_ago(1).strftime("%Y")
       @loans_term = term
       @group_term = Time.zone.now.years_ago(1).strftime("%Y")
+      @dep_term = Time.zone.now.years_ago(1).strftime("%Y")
       render :index
       return false
     end
@@ -299,6 +308,7 @@ class StatisticReportsController < ApplicationController
       @inout_term = Time.zone.now.years_ago(1).strftime("%Y")
       @loans_term = Time.zone.now.years_ago(1).strftime("%Y")
       @group_term = term
+      @dep_term = Time.zone.now.years_ago(1).strftime("%Y")
       render :index
       return false
     end
@@ -349,6 +359,7 @@ class StatisticReportsController < ApplicationController
       @inout_term = Time.zone.now.years_ago(1).strftime("%Y")
       @loans_term = Time.zone.now.years_ago(1).strftime("%Y")
       @group_term = term
+      @dep_term = Time.zone.now.years_ago(1).strftime("%Y")
       render :index
       return false      
   end
@@ -368,7 +379,8 @@ class StatisticReportsController < ApplicationController
       @items_year = Time.zone.now.years_ago(1).strftime("%Y")
       @inout_term = Time.zone.now.years_ago(1).strftime("%Y")
       @loans_term = Time.zone.now.years_ago(1).strftime("%Y")
-      @group_term = term
+      @group_term = Time.zone.now.years_ago(1).strftime("%Y")
+      @dep_term = term
       render :index
       return false
     end
@@ -419,7 +431,8 @@ class StatisticReportsController < ApplicationController
       @items_year = Time.zone.now.years_ago(1).strftime("%Y")
       @inout_term = Time.zone.now.years_ago(1).strftime("%Y")
       @loans_term = Time.zone.now.years_ago(1).strftime("%Y")
-      @group_term = term
+      @group_term = Time.zone.now.years_ago(1).strftime("%Y")
+      @dep_term = term
       render :index
       return false      
   end
