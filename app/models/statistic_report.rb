@@ -9652,6 +9652,7 @@ class StatisticReport < ActiveRecord::Base
         report.page.list(:list).add_row do |row|
           row.item(:type).value(I18n.t('statistic_report.items'))
 #          row.item(:library).value(I18n.t('statistic_report.all_library'))
+          row.item(:option).value("#{I18n.t('item.original')}/#{I18n.t('item.copy')}")
           12.times do |t|
             if t < 4 # for Japanese fiscal year
               value = Statistic.where(:yyyymm => "#{term.to_i + 1}#{"%02d" % (t + 1)}", :data_type => data_type, :library_id => 0).no_condition.first.value rescue 0
@@ -9665,21 +9666,50 @@ class StatisticReport < ActiveRecord::Base
         # each manifestation type categories
         manifestation_type_categories.each do |c|
           report.page.list(:list).add_row do |row|
-            row.item(:option).value(I18n.t("manifestation_type.#{c}"))
+            row.item(:option_right).value(I18n.t("manifestation_type.#{c}"))
             12.times do |t|
               if t < 4 # for Japanese fiscal year
-                value = Statistic.where(["yyyymm = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?)", "#{term.to_i + 1}#{"%02d" % (t + 1)}", data_type, 0, ManifestationType.type_ids(c)]).first.value rescue 0
+                value = Statistic.where(["yyyymm = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?) AND option = 0", "#{term.to_i + 1}#{"%02d" % (t + 1)}", data_type, 0, ManifestationType.type_ids(c)]).first.value rescue 0
               else
-                value = Statistic.where(["yyyymm = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?)", "#{term}#{"%02d" % (t + 1)}", data_type, 0, ManifestationType.type_ids(c)]).first.value rescue 0
+                value = Statistic.where(["yyyymm = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?) AND option = 0", "#{term}#{"%02d" % (t + 1)}", data_type, 0, ManifestationType.type_ids(c)]).first.value rescue 0
               end 
               row.item("value#{t+1}").value(to_format(value))
               row.item("valueall").value(to_format(value)) if t == 2 # March(end of fiscal year)
             end
-#            line_for_libraries(row) if manifestation_type_categories.last == c  
-            line(row) if manifestation_type_categories.last == c
+            line_for_libraries(row) if manifestation_type_categories.last == c  
           end
         end
 #      end
+      # spare items
+      report.page.list(:list).add_row do |row|
+        row.item(:option).value(I18n.t('item.spare'))
+        12.times do |t|
+          if t < 4 # for Japanese fiscal year
+            value = Statistic.where(:yyyymm => "#{term.to_i + 1}#{"%02d" % (t + 1)}", :data_type => data_type, :library_id => 0, :option => 4).first.value rescue 0
+          else
+            value = Statistic.where(:yyyymm => "#{term}#{"%02d" % (t + 1)}", :data_type => data_type, :library_id => 0, :option => 4).first.value rescue 0
+          end
+          row.item("value#{t+1}").value(to_format(value))
+          row.item("valueall").value(to_format(value)) if t == 2 # March(end of fiscal year)
+        end  
+      end
+      # each manifestation type categories
+      manifestation_type_categories.each do |c|
+        report.page.list(:list).add_row do |row|
+          row.item(:option_right).value(I18n.t("manifestation_type.#{c}"))
+          12.times do |t|
+            if t < 4 # for Japanese fiscal year
+              value = Statistic.where(["yyyymm = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?) AND option = 4", "#{term.to_i + 1}#{"%02d" % (t + 1)}", data_type, 0, ManifestationType.type_ids(c)]).first.value rescue 0
+            else
+              value = Statistic.where(["yyyymm = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?) AND option = 4", "#{term}#{"%02d" % (t + 1)}", data_type, 0, ManifestationType.type_ids(c)]).first.value rescue 0
+            end 
+            row.item("value#{t+1}").value(to_format(value))
+            row.item("valueall").value(to_format(value)) if t == 2 # March(end of fiscal year)
+          end
+          line(row) if manifestation_type_categories.last == c
+        end
+      end
+
 =begin
       # items each library
       libraries.each do |library|
@@ -10262,15 +10292,59 @@ class StatisticReport < ActiveRecord::Base
           when :department_name 
             row << ""
           when "sum"
-            value = Statistic.where("yyyymm = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?)", "#{term.to_i + 1}03", data_type, 0, ManifestationType.type_ids(c)).first.value rescue 0
+            value = Statistic.where("yyyymm = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?) AND option = 4", "#{term.to_i + 1}03", data_type, 0, ManifestationType.type_ids(c)).first.value rescue 0
             row << to_format(value)
           else
-            value = Statistic.where("yyyymm = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?)", column[0], data_type, 0, ManifestationType.type_ids(c)).first.value rescue 0
+            value = Statistic.where("yyyymm = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?) AND option = 4", column[0], data_type, 0, ManifestationType.type_ids(c)).first.value rescue 0
             row << to_format(value)
           end
         end
         output.print "\""+row.join("\"\t\"")+"\"\n"
       end
+      # spare items
+      row = []
+      columns.each do |column|
+        case column[0]
+        when :type
+          row << I18n.t('statistic_report.items')
+        when :option
+          row << I18n.t('item.spare')
+        when :manifestation_type
+          row << ""
+        when :department_name 
+          row << ""
+        when "sum"
+          value = Statistic.where(:yyyymm => "#{term.to_i + 1}03}", :data_type => data_type, :library_id => 0, :option => 4).first.value rescue 0
+          row << to_format(value)
+        else
+          value = Statistic.where(:yyyymm => column[0], :data_type => data_type, :library_id => 0, :option => 4).first.value rescue 0
+          row << to_format(value)
+        end
+      end
+      output.print "\""+row.join("\"\t\"")+"\"\n"
+      manifestation_type_categories.each do |c|
+        row = []  
+        columns.each do |column|
+          case column[0]
+          when :type
+            row << I18n.t('statistic_report.items')
+          when :option
+            row << I18n.t('item.spare')
+          when :manifestation_type
+            row << I18n.t("manifestation_type.#{c}")
+          when :department_name 
+            row << ""
+          when "sum"
+            value = Statistic.where("yyyymm = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?) AND option = 4", "#{term.to_i + 1}03", data_type, 0, ManifestationType.type_ids(c)).first.value rescue 0
+            row << to_format(value)
+          else
+            value = Statistic.where("yyyymm = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?) AND option = 4", column[0], data_type, 0, ManifestationType.type_ids(c)).first.value rescue 0
+            row << to_format(value)
+          end
+        end
+        output.print "\""+row.join("\"\t\"")+"\"\n"
+      end
+
       # open days of each libraries
       libraries.each do |library|
         sum = 0
@@ -10698,7 +10772,7 @@ class StatisticReport < ActiveRecord::Base
         data_type = 211
         report.page.list(:list).add_row do |row|
           row.item(:type).value(I18n.t('statistic_report.items'))
-#          row.item(:option).value()
+          row.item(:option).value("#{I18n.t('item.original')}/#{I18n.t('item.copy')}")
           if start_date != 27
             13.times do |t|
               value = Statistic.where(:yyyymmdd => "#{term.to_i}#{"%02d" % (t + start_date)}", :data_type => 211, :library_id => 0).no_condition.first.value rescue 0
@@ -10715,15 +10789,49 @@ class StatisticReport < ActiveRecord::Base
         # each manifestation type categories
         manifestation_type_categories.each do |c|
           report.page.list(:list).add_row do |row|
-            row.item(:option).value(I18n.t("manifestation_type.#{c}"))
+            row.item(:option_right).value(I18n.t("manifestation_type.#{c}"))
             if start_date != 27
               13.times do |t|
-                value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?)", "#{term.to_i}#{"%02d" % (t + start_date)}", data_type, 0, ManifestationType.type_ids(c)]).first.value rescue 0
+                value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?) AND option = 0", "#{term.to_i}#{"%02d" % (t + start_date)}", data_type, 0, ManifestationType.type_ids(c)]).first.value rescue 0
                 row.item("value##{t+1}").value(to_format(value))
               end
             else
               num_for_last_page.times do |t|
-                value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?)", "#{term.to_i}#{"%02d" % (t + start_date)}", data_type, 0, ManifestationType.type_ids(c)]).first.value rescue 0
+                value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?) AND option = 0", "#{term.to_i}#{"%02d" % (t + start_date)}", data_type, 0, ManifestationType.type_ids(c)]).first.value rescue 0
+                row.item("value##{t+1}").value(to_format(value))
+                row.item("value#13").value(to_format(value)) if t == num_for_last_page - 1
+              end
+            end
+            line_for_libraries(row) if manifestation_type_categories.last == c  
+          end
+        end
+        # spare items 
+        report.page.list(:list).add_row do |row|
+          row.item(:option).value(I18n.t('item.spare'))
+          if start_date != 27
+            13.times do |t|
+              value = Statistic.where(:yyyymmdd => "#{term.to_i}#{"%02d" % (t + start_date)}", :data_type => 211, :library_id => 0, :option => 4).first.value rescue 0
+              row.item("value##{t+1}").value(to_format(value))
+            end
+          else
+            num_for_last_page.times do |t|
+              value = Statistic.where(:yyyymmdd => "#{term.to_i}#{"%02d" % (t + start_date)}", :data_type => 211, :library_id => 0, :option => 4).first.value rescue 0
+              row.item("value##{t+1}").value(to_format(value))
+              row.item("value#13").value(to_format(value)) if t == num_for_last_page - 1
+            end
+          end
+        end
+        manifestation_type_categories.each do |c|
+          report.page.list(:list).add_row do |row|
+            row.item(:option_right).value(I18n.t("manifestation_type.#{c}"))
+            if start_date != 27
+              13.times do |t|
+                value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?) AND option = 4", "#{term.to_i}#{"%02d" % (t + start_date)}", data_type, 0, ManifestationType.type_ids(c)]).first.value rescue 0
+                row.item("value##{t+1}").value(to_format(value))
+              end
+            else
+              num_for_last_page.times do |t|
+                value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?) AND option = 4", "#{term.to_i}#{"%02d" % (t + start_date)}", data_type, 0, ManifestationType.type_ids(c)]).first.value rescue 0
                 row.item("value##{t+1}").value(to_format(value))
                 row.item("value#13").value(to_format(value)) if t == num_for_last_page - 1
               end
@@ -10953,6 +11061,8 @@ class StatisticReport < ActiveRecord::Base
     if departments.blank?
       return false
     end
+    manifestation_type_categories = ManifestationType.categories 
+    libraries = Library.all
     dir_base = "#{Rails.root}/private/system"
     out_dir = "#{dir_base}/statistic_report/"
     tsv_file = out_dir + "#{term}_departments_daily.tsv"
@@ -10961,7 +11071,9 @@ class StatisticReport < ActiveRecord::Base
     # header
     columns = [
       [:type,'statistic_report.type'],
-      [:department_name, 'statistic_report.department_name']
+      [:manifestation_type, 'statistic_report.manifestation_type'],      
+      [:department_name, 'statistic_report.department_name'],
+      [:option, 'statistic_report.option']
     ]
     File.open(tsv_file, "w") do |output|
       # add UTF-8 BOM for excel
@@ -10980,26 +11092,116 @@ class StatisticReport < ActiveRecord::Base
       columns << ["sum"]
       output.print "\""+row.join("\"\t\"")+"\"\n"
 
-      # checkout items each departments
-      departments.each do |department|
-        sum = 0
+      # items all libraries
+      row = []
+      columns.each do |column|
+        case column[0]
+        when :type
+          row << I18n.t('statistic_report.items')
+        when :manifestation_type
+          row << ""
+        when :department_name
+          row << ""
+        when :option
+          row << ""
+        when "sum"
+          value = Statistic.where(:yyyymmdd => "#{term}#{days}", :data_type => 211, :library_id => 0).no_condition.first.value rescue 0
+          row << to_format(value)
+        else
+          value = Statistic.where(:yyyymmdd => column[0], :data_type => 211, :library_id => 0).no_condition.first.value rescue 0
+          row << to_format(value)
+        end
+      end  
+      output.print "\""+row.join("\"\t\"")+"\"\n"
+      # items each manifestation type categories
+      manifestation_type_categories.each do |c|
         row = []
         columns.each do |column|
           case column[0]
           when :type
-            row << I18n.t('statistic_report.checkout_items')
+            row << I18n.t('statistic_report.items')
+          when :manifestation_type
+            row << I18n.t("manifestation_type.#{c}")
           when :department_name
-            row << department.display_name
+            row << ""
+          when :option
+            row << ""
           when "sum"
-            row << to_format(sum)
+            value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND option = 0 AND manifestation_type_id in (?)", "#{term}#{days}", 211, ManifestationType.type_ids(c)]).first.value rescue 0
+            row << to_format(value)
           else
-            value = Statistic.where(:yyyymmdd => column[0], :data_type => 221, :department_id => department.id).first.value rescue 0
-            sum += value
+            value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND option = 0 AND manifestation_type_id in (?)", column[0], 211, ManifestationType.type_ids(c)]).first.value rescue 0
             row << to_format(value)
           end
         end  
         output.print "\""+row.join("\"\t\"")+"\"\n"
       end
+      # spare
+      row = []
+      columns.each do |column|
+        case column[0]
+        when :type
+          row << I18n.t('statistic_report.items')
+        when :manifestation_type
+          row << ""
+        when :department_name
+          row << ""
+        when :option
+          row << I18n.t('item.spare')
+        when "sum"
+          value = Statistic.where(:yyyymmdd => "#{term}#{days}", :data_type => 211, :library_id => 0, :option=> 4).first.value rescue 0
+          row << to_format(value)
+        else
+          value = Statistic.where(:yyyymmdd => column[0], :data_type => 211, :library_id => 0, :option => 4).first.value rescue 0
+          row << to_format(value)
+        end
+      end  
+      output.print "\""+row.join("\"\t\"")+"\"\n"
+      # items each manifestation type categories
+      manifestation_type_categories.each do |c|
+        row = []
+        columns.each do |column|
+          case column[0]
+          when :type
+            row << I18n.t('statistic_report.items')
+          when :manifestation_type
+            row << I18n.t("manifestation_type.#{c}")
+          when :department_name
+            row << ""
+          when :option
+            row << I18n.t('item.spare')
+          when "sum"
+            value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND option = 4 AND manifestation_type_id in (?)", "#{term}#{days}", 211, ManifestationType.type_ids(c)]).first.value rescue 0
+            row << to_format(value)
+          else
+            value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND option = 4 AND manifestation_type_id in (?)", column[0], 211, ManifestationType.type_ids(c)]).first.value rescue 0
+            row << to_format(value)
+          end
+        end  
+        output.print "\""+row.join("\"\t\"")+"\"\n"
+      end
+      # checkout users all libraries
+      sum = 0
+      row = []
+      columns.each do |column|
+        case column[0]
+        when :type
+          row << I18n.t('statistic_report.checkout_users')
+        when :manifestation_type
+          row << ""
+        when :department_name
+          row << ""
+        when :option
+          row << ""
+        when "sum"
+          row << to_format(sum)
+        else
+          value = Statistic.where(:yyyymmdd => column[0], :data_type => 222, :library_id => 0).no_condition.first.value rescue 0
+          sum += value
+          row << to_format(value)
+        end
+      end  
+      output.print "\""+row.join("\"\t\"")+"\"\n"
       # checkout users each departments
       departments.each do |department|
         sum = 0
@@ -11010,6 +11212,10 @@ class StatisticReport < ActiveRecord::Base
             row << I18n.t('statistic_report.checkout_users')
           when :department_name
             row << department.display_name
+          when :manifestation_type
+            row << ""
+          when :option
+            row << ""
           when "sum"
             row << to_format(sum)
           else
@@ -11020,6 +11226,189 @@ class StatisticReport < ActiveRecord::Base
         end  
         output.print "\""+row.join("\"\t\"")+"\"\n"
       end
+      # checkout items all libraries
+      sum = 0
+      row = []
+      columns.each do |column|
+        case column[0]
+        when :type
+          row << I18n.t('statistic_report.checkout_items')
+        when :manifestation_type
+          row << ""
+        when :department_name
+          row << ""
+        when :option
+          row << ""
+        when "sum"
+          row << to_format(sum)
+        else
+          value = Statistic.where(:yyyymmdd => column[0], :data_type => 221, :library_id => 0).no_condition.first.value rescue 0
+          sum += value
+          row << to_format(value)
+        end
+      end
+      output.print "\""+row.join("\"\t\"")+"\"\n"  
+      # checkout items each manifestation_type_categories
+      manifestation_type_categories.each do |c|
+        sum = 0
+        row = []
+        columns.each do |column|
+          case column[0]
+          when :type
+            row << I18n.t('statistic_report.checkout_items')
+          when :department_name
+            row << ""
+          when :manifestation_type
+            row << I18n.t("manifestation_type.#{c}")
+          when :option
+            row << ""
+          when "sum"
+            row << to_format(sum)
+          else
+            value = Statistic.where(["yyyymmdd = ? AND library_id = 0 AND data_type = ? AND manifestation_type_id in (?)", column[0], 221, ManifestationType.type_ids(c)]).first.value rescue 0
+            sum += value
+            row << to_format(value)
+          end
+        end  
+        output.print "\""+row.join("\"\t\"")+"\"\n"
+      end
+      # checkout items reminded
+      sum = 0
+      row = []
+      columns.each do |column|
+        case column[0]
+        when :type
+          row << I18n.t('statistic_report.remind_checkouts')
+        when :department_name
+          row << ""
+        when :manifestation_type
+          row << ""
+        when :option
+          row << ""
+        when "sum"
+          row << to_format(sum)
+        else
+          value = Statistic.where(:yyyymmdd => column[0], :data_type => 221, :library_id => 0, :option => 5).first.value rescue 0
+          sum += value
+          row << to_format(value)
+        end
+      end
+      output.print "\""+row.join("\"\t\"")+"\"\n"  
+      # checkin items
+      sum = 0
+      row = []
+      columns.each do |column|
+        case column[0]
+        when :type
+          row << I18n.t('statistic_report.checkin_items')
+        when :department_name
+          row << ""
+        when :manifestation_type
+          row << ""
+        when :option
+          row << ""
+        when "sum"
+          row << to_format(sum)
+        else
+          value = Statistic.where(:yyyymmdd => column[0], :data_type => 251, :library_id => 0).no_condition.first.value rescue 0
+          sum += value
+          row << to_format(value)
+        end
+      end 
+      output.print "\""+row.join("\"\t\"")+"\"\n"
+      # checkin items reminded
+      sum = 0
+      row = []
+      columns.each do |column|
+        case column[0]
+        when :type
+          row << I18n.t('statistic_report.checkin_remindered')
+        when :department_name
+          row << ""
+        when :manifestation_type
+          row << ""
+        when :option
+          row << ""
+        when "sum"
+          row << to_format(sum)
+        else
+          value = Statistic.where(:yyyymmdd => column[0], :data_type => 251, :library_id => 0, :option => 5).first.value rescue 0
+          sum += value
+          row << to_format(value)
+        end
+      end
+      output.print "\""+row.join("\"\t\"")+"\"\n"  
+      # reserves all libraries
+      sum = 0
+      row = []
+      columns.each do |column|
+        case column[0]
+        when :type
+          row << I18n.t('statistic_report.reserves')
+        when :department_name
+          row << ""
+        when :manifestation_type
+          row << ""
+        when :option
+          row << ""
+        when "sum"
+          row << to_format(sum)
+        else
+          value = Statistic.where(:yyyymmdd => column[0], :data_type => 233, :library_id => 0).no_condition.first.value rescue 0
+          sum += value
+          row << to_format(value)
+        end
+      end 
+      output.print "\""+row.join("\"\t\"")+"\"\n"
+      # questions all libraries
+      sum = 0
+      row = []
+      columns.each do |column|
+        case column[0]
+        when :type
+          row << I18n.t('statistic_report.questions')
+        when :department_name
+          row << ""
+        when :manifestation_type
+          row << ""
+        when :option
+          row << ""
+        when "sum"
+          row << to_format(sum)
+        else
+          value = Statistic.where(:yyyymmdd => column[0], :data_type => 243, :library_id => 0).no_condition.first.value rescue 0
+          sum += value
+          row << to_format(value)
+        end
+      end 
+      output.print "\""+row.join("\"\t\"")+"\"\n"
+      # consultations each library
+      libraries.each do |library|
+        sum = 0
+        row = []
+        columns.each do |column|
+          case column[0]
+          when :type
+            row << I18n.t('statistic_report.consultations')
+#          when :library
+#            row << library.display_name
+          when :department_name
+            row << ""
+          when :manifestation_type
+            row << ""
+          when :option
+            row << ""
+          when "sum"
+            row << to_format(sum)
+          else
+            value = Statistic.where(:yyyymmdd => column[0], :data_type => 214, :library_id => library.id).no_condition.first.value rescue 0
+            sum += value
+            row << to_format(value)
+          end
+        end 
+        output.print "\""+row.join("\"\t\"")+"\"\n"
+      end
+#TODO
     end
     return tsv_file
   end

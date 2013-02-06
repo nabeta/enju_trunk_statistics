@@ -224,7 +224,14 @@ class Statistic < ActiveRecord::Base
       statistic = Statistic.new
       set_date(statistic, end_at, term_id)
       statistic.data_type = data_type
-      statistic.value = Item.count_by_sql(["select count(*) from items where created_at >= ? AND created_at  < ?", start_at, end_at])
+      statistic.value = Item.count_by_sql(["select count(*) from items where rank < 2 AND created_at >= ? AND created_at  < ?", start_at, end_at])
+      statistic.save! if statistic.value > 0
+      # all spare item
+      statistic = Statistic.new
+      set_date(statistic, end_at, term_id)
+      statistic.data_type = data_type
+      statistic.option = 4
+      statistic.value = Item.count_by_sql(["select count(*) from items where rank >= 2 AND created_at >= ? AND created_at  < ?", start_at, end_at])
       statistic.save! if statistic.value > 0
 
       # items each manifestation_types
@@ -233,9 +240,19 @@ class Statistic < ActiveRecord::Base
         set_date(statistic, end_at, term_id)
         statistic.data_type = data_type
         statistic.manifestation_type_id = id
-        statistic.value = Item.count_by_sql(["select count(items) from items, exemplifies, manifestations where items.id = exemplifies.item_id AND manifestations.id = exemplifies.manifestation_id AND manifestations.manifestation_type_id = ? AND items.created_at >= ? AND items.created_at  < ?", id, start_at, end_at])
+        statistic.value = Item.count_by_sql(["select count(items) from items, exemplifies, manifestations where items.rank < 2 AND items.id = exemplifies.item_id AND manifestations.id = exemplifies.manifestation_id AND manifestations.manifestation_type_id = ? AND items.created_at >= ? AND items.created_at  < ?", id, start_at, end_at])
+        statistic.save! if statistic.value > 0        
+        # spare items each manifestation_types
+        statistic = Statistic.new
+        set_date(statistic, end_at, term_id)
+        statistic.data_type = data_type
+        statistic.manifestation_type_id = id
+        statistic.option = 4
+        statistic.value = Item.count_by_sql(["select count(items) from items, exemplifies, manifestations where items.rank >= 2 AND items.id = exemplifies.item_id AND manifestations.id = exemplifies.manifestation_id AND manifestations.manifestation_type_id = ? AND items.created_at >= ? AND items.created_at  < ?", id, start_at, end_at])
         statistic.save! if statistic.value > 0        
       end
+
+      
       
 =begin
       # items each checkout types
@@ -493,7 +510,7 @@ class Statistic < ActiveRecord::Base
       set_date(statistic, end_at, term_id)
       statistic.data_type = data_type
       statistic.option = 1
-      statistic.value = Item.count_by_sql(["select count(*) from items where circulation_status_id IN (?) AND created_at >= ? AND created_at  < ?", missing_state_ids, start_at, end_at])
+      statistic.value = Item.count_by_sql(["select count(*) from items where rank < 2 AND circulation_status_id IN (?) AND created_at >= ? AND created_at  < ?", missing_state_ids, start_at, end_at])
       statistic.save! if statistic.value > 0
 =begin
       # each libraries
@@ -503,7 +520,7 @@ class Statistic < ActiveRecord::Base
         statistic.data_type = data_type
         statistic.option = 1
         statistic.library = library
-        statistic.value = statistic.value = Item.count_by_sql(["select count(items) from items, shelves, libraries where items.shelf_id = shelves.id AND libraries.id = shelves.library_id AND items.circulation_status_id IN (?) AND libraries.id = ? AND items.created_at >= ? AND items.created_at < ?", missing_state_ids, library.id, start_at, end_at])
+        statistic.value = Item.count_by_sql(["select count(items) from items, shelves, libraries where items.shelf_id = shelves.id AND libraries.id = shelves.library_id AND items.circulation_status_id IN (?) AND libraries.id = ? AND items.created_at >= ? AND items.created_at < ?", missing_state_ids, library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
       end
 =end
