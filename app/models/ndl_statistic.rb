@@ -39,11 +39,10 @@ class NdlStatistic < ActiveRecord::Base
       # p "ndl_statistics of manifestation_counts"
       # 書籍、逐次刊行物
       [ "book", "magazine" ].each do |type|
-        book_type = (type == 'book') ? ['%book', '%monograph'] : ['%magazine', '%serial_book']
+        book_type = (type == 'book') ? 'book' : 'series'
         items_all = Item.
           includes(:manifestation => [:manifestation_type, :carrier_type]).
-          where("manifestation_types.name like ? OR
-                 manifestation_types.name like ?", book_type[0], book_type[1]).
+          where("manifestation_types.id in (?)", ManifestationType.type_ids(book_type)).
           where("carrier_types.name = 'print'").
           where("bookbinder_id IS NULL OR items.bookbinder IS TRUE")
 	# 国内, 国外
@@ -143,11 +142,10 @@ class NdlStatistic < ActiveRecord::Base
       # p "ndl_statistics of accept_counts"
       # 書籍、逐次刊行物
       [ "book", "magazine" ].each do |type|
-        book_type = (type == 'book') ? ['%book', '%monograph'] : ['%magazine', '%serial_book']
+        book_type = (type == 'book') ? 'book' : 'series'
         items_all = Item.
           includes(:manifestation => [:manifestation_type, :carrier_type]).
-          where("manifestation_types.name like ? OR
-                 manifestation_types.name like ?", book_type[0], book_type[1]).
+          where("manifestation_types.id in (?)", ManifestationType.type_ids(book_type)).
           where("carrier_types.name = 'print'").
           where("bookbinder_id IS NULL OR items.bookbinder IS TRUE")
 	# 国内, 国外
@@ -233,11 +231,10 @@ class NdlStatistic < ActiveRecord::Base
       # p "ndl_statistics of checkout_counts"
       # 書籍、逐次刊行物
       [ "book", "magazine" ].each do |type|
-        book_type = (type == 'book') ? ['%book', '%monograph'] : ['%magazine', '%serial_book']
+        book_type = (type == 'book') ? 'book' : 'series'
         checkouts = Checkout.
           joins(:item => { :manifestation => [:manifestation_type, :carrier_type] }).
-          where("manifestation_types.name like ? OR
-                 manifestation_types.name like ?", book_type[0], book_type[1]).
+          where("manifestation_types.id in (?)", ManifestationType.type_ids(book_type)).
           where("carrier_types.name = 'print'")
 	# 貸出者数
 	user = checkouts.where("checkouts.created_at between ? and ?",
@@ -375,7 +372,7 @@ private
 	    c.width = 25
 	  end
 	  sheet.merge_cells("A12:B12")
-	  ndl_statistic.ndl_stat_manifestations.where(:item_type => 'book').each do |i|
+	  ndl_statistic.ndl_stat_manifestations.where(:item_type => 'magazine').each do |i|
 	    row = []
 	    region = i.region == 'domestic' ? '国内' : '外国'
 	    row << region
