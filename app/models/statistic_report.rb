@@ -9622,7 +9622,7 @@ class StatisticReport < ActiveRecord::Base
   end
 
   def self.get_departments_monthly_pdf(term)
-    libraries = Library.all
+    libraries = Library.real.all
     departments = Department.all
     manifestation_type_categories = ManifestationType.categories
     user_statuses = UserStatus.all
@@ -9676,10 +9676,11 @@ class StatisticReport < ActiveRecord::Base
               row.item("value#{t+1}").value(to_format(value))
               row.item("valueall").value(to_format(value)) if t == 2 # March(end of fiscal year)
             end
-            line_for_libraries(row) if manifestation_type_categories.last == c  
+            line(row) if manifestation_type_categories.last == c  
           end
         end
 #      end
+if false
       # spare items
       report.page.list(:list).add_row do |row|
         row.item(:option).value(I18n.t('item.spare'))
@@ -9709,6 +9710,7 @@ class StatisticReport < ActiveRecord::Base
           line(row) if manifestation_type_categories.last == c
         end
       end
+end
 
 =begin
       # items each library
@@ -10302,6 +10304,7 @@ class StatisticReport < ActiveRecord::Base
         output.print "\""+row.join("\"\t\"")+"\"\n"
       end
       # spare items
+if false
       row = []
       columns.each do |column|
         case column[0]
@@ -10344,6 +10347,7 @@ class StatisticReport < ActiveRecord::Base
         end
         output.print "\""+row.join("\"\t\"")+"\"\n"
       end
+end
 
       # open days of each libraries
       libraries.each do |library|
@@ -10802,9 +10806,10 @@ class StatisticReport < ActiveRecord::Base
                 row.item("value#13").value(to_format(value)) if t == num_for_last_page - 1
               end
             end
-            line_for_libraries(row) if manifestation_type_categories.last == c  
+            line(row) if manifestation_type_categories.last == c  
           end
         end
+if false
         # spare items 
         report.page.list(:list).add_row do |row|
           row.item(:option).value(I18n.t('item.spare'))
@@ -10839,6 +10844,7 @@ class StatisticReport < ActiveRecord::Base
             line(row) if manifestation_type_categories.last == c  
           end
         end
+end
         # checkout users all libraries
         data_type = 222
         report.page.list(:list).add_row do |row|
@@ -11137,6 +11143,7 @@ class StatisticReport < ActiveRecord::Base
         output.print "\""+row.join("\"\t\"")+"\"\n"
       end
       # spare
+if false
       row = []
       columns.each do |column|
         case column[0]
@@ -11180,6 +11187,7 @@ class StatisticReport < ActiveRecord::Base
         end  
         output.print "\""+row.join("\"\t\"")+"\"\n"
       end
+end
       # checkout users all libraries
       sum = 0
       row = []
