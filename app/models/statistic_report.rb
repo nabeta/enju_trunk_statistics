@@ -9871,7 +9871,7 @@ end
       if libraries.size > 1
         report.page.list(:list).add_row do |row|
           row.item(:type).value(I18n.t('statistic_report.remind_checkouts'))
-          row.item(:library).value(I18n.t('statistic_report.all_library'))
+#          row.item(:library).value(I18n.t('statistic_report.all_library'))
           sum = 0
           12.times do |t|
             if t < 4 # for Japanese fiscal year
