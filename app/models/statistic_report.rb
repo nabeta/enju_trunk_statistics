@@ -10224,7 +10224,7 @@ end
     end
     manifestation_type_categories = ManifestationType.categories
     user_statuses = UserStatus.all
-    libraries = Library.all
+    libraries = Library.real.all
     dir_base = "#{Rails.root}/private/system"
     out_dir = "#{dir_base}/statistic_report/"
     tsv_file = out_dir + "#{term}_departments_monthly.tsv"
