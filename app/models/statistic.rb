@@ -22,7 +22,8 @@ class Statistic < ActiveRecord::Base
   @user_status_ids = UserStatus.all.collect(&:id) || []
   @manifestation_type_ids = ManifestationType.all.collect(&:id) || []
   before_validation :check_record
-  scope :no_condition, where(:checkout_type_id => nil, :shelf_id => nil, :ndc => nil, :call_number => nil, :age => nil, :option => 0, :area_id => nil, :user_type => nil, :user_id => nil, :department_id => nil, :manifestation_type_id => nil, :user_status_id => nil)
+  scope :no_condition, where(:checkout_type_id => 0, :shelf_id => 0, :ndc => nil, :call_number => nil, :age => 0, :option => 0, 
+                             :area_id => 0, :user_type => 0, :user_id => 0, :department_id => 0, :manifestation_type_id => 0, :user_status_id => 0)
 
   def self.calc_users(start_at, end_at, term_id)
     Statistic.transaction do
