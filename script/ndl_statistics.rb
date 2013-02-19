@@ -114,7 +114,8 @@ if $0 == __FILE__
   begin
     ARGV.shift if ARGV.first == '--' # NOTE: rails runnerのコマンドライン引数のクセを回避するための処置
     output = NdlStatisticsScript.run!($0, ARGV)
-    puts output.chomp unless output.blank?
+#    puts output.chomp unless output.blank?
+    puts output unless output.blank?
   rescue NdlStatisticsScript::InvalidTerm
     abort '不正な年度です'
   rescue NdlStatisticsScript::AlreadyExist
