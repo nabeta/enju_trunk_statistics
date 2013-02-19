@@ -22,7 +22,7 @@ class Statistic < ActiveRecord::Base
   @user_status_ids = UserStatus.all.collect(&:id) || []
   @manifestation_type_ids = ManifestationType.all.collect(&:id) || []
   before_validation :check_record
-  scope :no_condition, where(:checkout_type_id => 0, :shelf_id => 0, :ndc => nil, :call_number => nil, :age => 0, :option => 0, 
+  scope :no_condition, where(:checkout_type_id => 0, :shelf_id => 0, :ndc => nil, :call_number => nil, :age => 0, :option => 0, :user_group_id => 0,
                              :area_id => 0, :user_type => 0, :user_id => 0, :department_id => 0, :manifestation_type_id => 0, :user_status_id => 0)
 
   def self.calc_users(start_at, end_at, term_id)
@@ -225,14 +225,14 @@ class Statistic < ActiveRecord::Base
       statistic = Statistic.new
       set_date(statistic, end_at, term_id)
       statistic.data_type = data_type
-      statistic.value = Item.count_by_sql(["select count(*) from items where rank < 2 AND created_at >= ? AND created_at  < ?", start_at, end_at])
+      statistic.value = Item.count_by_sql(["select count(*) from items where rank < 2 AND created_at >= ? AND created_at  < ? AND (bookbinder IS TRUE OR bookbinder_id IS NULL)", start_at, end_at])
       statistic.save! if statistic.value > 0
       # all spare item
       statistic = Statistic.new
       set_date(statistic, end_at, term_id)
       statistic.data_type = data_type
       statistic.option = 4
-      statistic.value = Item.count_by_sql(["select count(*) from items where rank >= 2 AND created_at >= ? AND created_at  < ?", start_at, end_at])
+      statistic.value = Item.count_by_sql(["select count(*) from items where rank >= 2 AND created_at >= ? AND created_at  < ? AND (bookbinder IS TRUE OR bookbinder_id IS NULL)", start_at, end_at])
       statistic.save! if statistic.value > 0
 
       # items each manifestation_types
@@ -241,7 +241,7 @@ class Statistic < ActiveRecord::Base
         set_date(statistic, end_at, term_id)
         statistic.data_type = data_type
         statistic.manifestation_type_id = id
-        statistic.value = Item.count_by_sql(["select count(items) from items, exemplifies, manifestations where items.rank < 2 AND items.id = exemplifies.item_id AND manifestations.id = exemplifies.manifestation_id AND manifestations.manifestation_type_id = ? AND items.created_at >= ? AND items.created_at  < ?", id, start_at, end_at])
+        statistic.value = Item.count_by_sql(["select count(items) from items, exemplifies, manifestations where items.rank < 2 AND items.id = exemplifies.item_id AND manifestations.id = exemplifies.manifestation_id AND manifestations.manifestation_type_id = ? AND items.created_at >= ? AND items.created_at  < ? AND (items.bookbinder IS TRUE OR items.bookbinder_id IS NULL)", id, start_at, end_at])
         statistic.save! if statistic.value > 0        
         # spare items each manifestation_types
         statistic = Statistic.new
@@ -249,7 +249,7 @@ class Statistic < ActiveRecord::Base
         statistic.data_type = data_type
         statistic.manifestation_type_id = id
         statistic.option = 4
-        statistic.value = Item.count_by_sql(["select count(items) from items, exemplifies, manifestations where items.rank >= 2 AND items.id = exemplifies.item_id AND manifestations.id = exemplifies.manifestation_id AND manifestations.manifestation_type_id = ? AND items.created_at >= ? AND items.created_at  < ?", id, start_at, end_at])
+        statistic.value = Item.count_by_sql(["select count(items) from items, exemplifies, manifestations where items.rank >= 2 AND items.id = exemplifies.item_id AND manifestations.id = exemplifies.manifestation_id AND manifestations.manifestation_type_id = ? AND items.created_at >= ? AND items.created_at  < ? AND (items.bookbinder IS TRUE OR items.bookbinder_id IS NULL)", id, start_at, end_at])
         statistic.save! if statistic.value > 0        
       end
 
@@ -2479,7 +2479,12 @@ class Statistic < ActiveRecord::Base
   end
 
   def check_record
-    record = Statistic.where(:data_type => self.data_type, :yyyymmdd => self.yyyymmdd, :yyyymm => self.yyyymm, :library_id => self.library_id, :hour => self.hour, :checkout_type_id => self.checkout_type_id, :shelf_id => self.shelf_id, :ndc => self.ndc, :call_number => self.call_number, :age => self.age, :option => self.option, :area_id => self.area_id, :user_type => self.user_type, :user_id => self.user_id, :user_group_id => self.user_group_id, :department_id => self.department_id, :manifestation_type_id => self.manifestation_type_id, :user_status_id => self.user_status_id).first
+    record = Statistic.where(:data_type => self.data_type, :yyyymmdd => self.yyyymmdd, :yyyymm => self.yyyymm, 
+                             :library_id => self.library_id, :hour => self.hour, :checkout_type_id => self.checkout_type_id, 
+                             :shelf_id => self.shelf_id, :ndc => self.ndc, :call_number => self.call_number, :age => self.age, 
+                             :option => self.option, :area_id => self.area_id, :user_type => self.user_type, :user_id => self.user_id, 
+                             :user_group_id => self.user_group_id, :department_id => self.department_id, :manifestation_type_id => self.manifestation_type_id, 
+                             :user_status_id => self.user_status_id).first
     record.destroy if record
   end
   

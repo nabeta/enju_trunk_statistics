@@ -9670,9 +9670,9 @@ class StatisticReport < ActiveRecord::Base
             row.item(:option_right).value(I18n.t("manifestation_type.#{c}"))
             12.times do |t|
               if t < 3 # for Japanese fiscal year
-                value = Statistic.where(["yyyymm = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?) AND option = 0", "#{term.to_i + 1}#{"%02d" % (t + 1)}", data_type, 0, ManifestationType.type_ids(c)]).first.value rescue 0
+                value = Statistic.where(["yyyymm = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?) AND option = 0", "#{term.to_i + 1}#{"%02d" % (t + 1)}", data_type, 0, ManifestationType.type_ids(c)]).sum(:value) rescue 0
               else
-                value = Statistic.where(["yyyymm = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?) AND option = 0", "#{term}#{"%02d" % (t + 1)}", data_type, 0, ManifestationType.type_ids(c)]).first.value rescue 0
+                value = Statistic.where(["yyyymm = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?) AND option = 0", "#{term}#{"%02d" % (t + 1)}", data_type, 0, ManifestationType.type_ids(c)]).sum(:value) rescue 0
               end 
               row.item("value#{t+1}").value(to_format(value))
               row.item("valueall").value(to_format(value)) if t == 2 # March(end of fiscal year)
@@ -9857,9 +9857,9 @@ end
           sum = 0
           12.times do |t|
             if t < 3 # for Japanese fiscal year
-              value = Statistic.where(["yyyymm = ? AND data_type = ? AND manifestation_type_id in (?)", "#{term.to_i + 1}#{"%02d" % (t + 1)}", 121, ManifestationType.type_ids(c)]).first.value rescue 0
+              value = Statistic.where(["yyyymm = ? AND data_type = ? AND manifestation_type_id in (?)", "#{term.to_i + 1}#{"%02d" % (t + 1)}", 121, ManifestationType.type_ids(c)]).sum(:value) rescue 0
             else
-              value = Statistic.where(["yyyymm = ? AND data_type = ? AND manifestation_type_id in (?)", "#{term}#{"%02d" % (t + 1)}", 121, ManifestationType.type_ids(c)]).first.value rescue 0
+              value = Statistic.where(["yyyymm = ? AND data_type = ? AND manifestation_type_id in (?)", "#{term}#{"%02d" % (t + 1)}", 121, ManifestationType.type_ids(c)]).sum(:value) rescue 0
             end
             row.item("value#{t+1}").value(to_format(value))
             sum = sum + value if value
@@ -10337,10 +10337,10 @@ end
           when :department_name 
             row << ""
           when "sum"
-            value = Statistic.where("yyyymm = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?)", "#{term.to_i + 1}03", data_type, 0, ManifestationType.type_ids(c)).first.value rescue 0
+            value = Statistic.where("yyyymm = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?)", "#{term.to_i + 1}03", data_type, 0, ManifestationType.type_ids(c)).sum(:value) rescue 0
             row << to_format(value)
           else
-            value = Statistic.where("yyyymm = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?)", column[0], data_type, 0, ManifestationType.type_ids(c)).first.value rescue 0
+            value = Statistic.where("yyyymm = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?)", column[0], data_type, 0, ManifestationType.type_ids(c)).sum(:value) rescue 0
             row << to_format(value)
           end
         end
@@ -10513,7 +10513,7 @@ end
             when "sum"
               row << to_format(sum)
             else
-              value = Statistic.where(["yyyymm = ? AND data_type = ? AND manifestation_type_id in (?)", column[0], 121, ManifestationType.type_ids(c)]).first.value rescue 0
+              value = Statistic.where(["yyyymm = ? AND data_type = ? AND manifestation_type_id in (?)", column[0], 121, ManifestationType.type_ids(c)]).sum(:value) rescue 0
               sum += value
               row << to_format(value)
             end  
@@ -10869,12 +10869,12 @@ end
             row.item(:option_right).value(I18n.t("manifestation_type.#{c}"))
             if start_date != 27
               13.times do |t|
-                value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?) AND option = 0", "#{term.to_i}#{"%02d" % (t + start_date)}", data_type, 0, ManifestationType.type_ids(c)]).first.value rescue 0
+                value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?) AND option = 0", "#{term.to_i}#{"%02d" % (t + start_date)}", data_type, 0, ManifestationType.type_ids(c)]).sum(:value) rescue 0
                 row.item("value##{t+1}").value(to_format(value))
               end
             else
               num_for_last_page.times do |t|
-                value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?) AND option = 0", "#{term.to_i}#{"%02d" % (t + start_date)}", data_type, 0, ManifestationType.type_ids(c)]).first.value rescue 0
+                value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?) AND option = 0", "#{term.to_i}#{"%02d" % (t + start_date)}", data_type, 0, ManifestationType.type_ids(c)]).sum(:value) rescue 0
                 row.item("value##{t+1}").value(to_format(value))
                 row.item("value#13").value(to_format(value)) if t == num_for_last_page - 1
               end
@@ -10997,12 +10997,12 @@ end
             row.item(:option).value(I18n.t("manifestation_type.#{c}"))   
             if start_date != 27
               13.times do |t|
-                value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?)", "#{term.to_i}#{"%02d" % (t + start_date)}", 221, 0, ManifestationType.type_ids(c)]).first.value rescue 0
+                value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?)", "#{term.to_i}#{"%02d" % (t + start_date)}", 221, 0, ManifestationType.type_ids(c)]).sum(:value) rescue 0
                 row.item("value##{t+1}").value(to_format(value))
               end
             else
               num_for_last_page.times do |t|
-                value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?)", "#{term.to_i}#{"%02d" % (t + start_date)}", 221, 0, ManifestationType.type_ids(c)]).first.value rescue 0
+                value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND library_id = ? AND manifestation_type_id in (?)", "#{term.to_i}#{"%02d" % (t + start_date)}", 221, 0, ManifestationType.type_ids(c)]).sum(:value) rescue 0
                 row.item("value##{t+1}").value(to_format(value))
               end
               sum = 0
@@ -11130,7 +11130,30 @@ end
           end
           line(row)
         end
+        # consultations each library
+        report.page.list(:list).add_row do |row|
+          row.item(:type).value(I18n.t('statistic_report.consultations'))
+          if start_date != 27
+            13.times do |t|
+              value = Statistic.where(:yyyymmdd => "#{term.to_i}#{"%02d" % (t + start_date)}", :data_type => 214, :library_id => 0).no_condition.first.value rescue 0
+              row.item("value##{t+1}").value(to_format(value))
+            end  
+          else
+            num_for_last_page.times do |t|
+              value = Statistic.where(:yyyymmdd => "#{term.to_i}#{"%02d" % (t + start_date)}", :data_type => 214, :library_id => 0).no_condition.first.value rescue 0
+              row.item("value##{t+1}").value(to_format(value))
+            end
+            sum = 0
+            datas = Statistic.where(:yyyymm => term, :data_type => 214, :library_id => 0).no_condition
+            datas.each do |data|
+              sum = sum + data.value
+            end
+            row.item("value#13").value(sum)
+          end
+          line(row)
+        end
       end
+
       return report.generate
     rescue Exception => e
       logger.error "failed #{e}"
@@ -11144,7 +11167,7 @@ end
       return false
     end
     manifestation_type_categories = ManifestationType.categories 
-    libraries = Library.all
+    libraries = Library.real.all
     dir_base = "#{Rails.root}/private/system"
     out_dir = "#{dir_base}/statistic_report/"
     tsv_file = out_dir + "#{term}_departments_daily.tsv"
@@ -11209,10 +11232,10 @@ end
           when :option
             row << ""
           when "sum"
-            value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND option = 0 AND manifestation_type_id in (?)", "#{term}#{days}", 211, ManifestationType.type_ids(c)]).first.value rescue 0
+            value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND option = 0 AND manifestation_type_id in (?)", "#{term}#{days}", 211, ManifestationType.type_ids(c)]).sum(:value) rescue 0
             row << to_format(value)
           else
-            value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND option = 0 AND manifestation_type_id in (?)", column[0], 211, ManifestationType.type_ids(c)]).first.value rescue 0
+            value = Statistic.where(["yyyymmdd = ? AND data_type = ? AND option = 0 AND manifestation_type_id in (?)", column[0], 211, ManifestationType.type_ids(c)]).sum(:value) rescue 0
             row << to_format(value)
           end
         end  
@@ -11350,7 +11373,7 @@ end
           when "sum"
             row << to_format(sum)
           else
-            value = Statistic.where(["yyyymmdd = ? AND library_id = 0 AND data_type = ? AND manifestation_type_id in (?)", column[0], 221, ManifestationType.type_ids(c)]).first.value rescue 0
+            value = Statistic.where(["yyyymmdd = ? AND library_id = 0 AND data_type = ? AND manifestation_type_id in (?)", column[0], 221, ManifestationType.type_ids(c)]).sum(:value) rescue 0
             sum += value
             row << to_format(value)
           end
