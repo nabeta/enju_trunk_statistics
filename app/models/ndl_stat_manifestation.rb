@@ -3,7 +3,7 @@ class NdlStatManifestation < ActiveRecord::Base
   attr_accessible :current_term_end_count, :dec_count, :inc_count, :previous_term_end_count, :region, :item_type
 
   item_type_list = ['book', 'magazine', 'other_micro', 'other_av', 'other_file']
-  region_list = ['domestic', 'foreign']
+  region_list = ['domestic', 'foreign', 'none']
   
   validates_presence_of :current_term_end_count, :dec_count, :inc_count, :previous_term_end_count, :item_type
   validates_inclusion_of :item_type, :in => item_type_list

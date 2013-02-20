@@ -114,7 +114,7 @@ class NdlStatistic < ActiveRecord::Base
             where("carrier_types.name = 'file'").
             where("bookbinder_id IS NULL OR items.bookbinder IS TRUE")
 	end
-        region = "na"
+        region = "none"
         # 前年度末現在数
 	prev = items.includes(:circulation_status).
                  where("circulation_statuses.name not in ('Removed', 'Lost', 'Missing')").
@@ -160,7 +160,8 @@ class NdlStatistic < ActiveRecord::Base
           includes(:manifestation => [:manifestation_type, :carrier_type]).
           where("manifestation_types.id in (?)", ManifestationType.type_ids(book_type)).
           where("carrier_types.name = 'print'").
-          where("bookbinder_id IS NULL OR items.bookbinder IS TRUE")
+          where("bookbinder_id IS NULL OR items.bookbinder IS TRUE").
+          where("items.created_at BETWEEN ? AND ?" ,@prev_term_end ,@curr_term_end)
 	# 国内, 国外
         [ "domestic", "foreign" ].each do |region|
 	  manifestation_type = (region == "domestic") ? 'japanese%' : 'foreign%'
@@ -214,7 +215,7 @@ class NdlStatistic < ActiveRecord::Base
             where("carrier_types.name = 'file'").
             where("bookbinder_id IS NULL OR items.bookbinder IS TRUE")
 	end
-        region = "na"
+        region = "none"
 	# 購入
 	purchase = items.includes(:accept_type).
                      where("accept_types.name = 'purchase'").

@@ -3,7 +3,7 @@ class NdlStatAccept < ActiveRecord::Base
   attr_accessible :donation, :production, :purchase, :region, :item_type
   
   item_type_list = ['book', 'magazine', 'other_micro', 'other_av', 'other_file']
-  region_list = ['domestic', 'foreign']
+  region_list = ['domestic', 'foreign', 'none']
   
   validates_presence_of :item_type
   validates_inclusion_of :item_type, :in => item_type_list
