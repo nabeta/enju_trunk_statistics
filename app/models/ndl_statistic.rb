@@ -12,6 +12,19 @@ class NdlStatistic < ActiveRecord::Base
   validates_uniqueness_of :term_id
   validates_inclusion_of :term_id, :in => term_ids
 
+  # 呼び出し用メソッド
+  def self.calc_sum
+    term = Term.current_term
+    NdlStatistic.where(:term_id => term.id).destroy_all
+    NdlStatistic.create!(:term_id => term.id).calc_all
+  end
+
+  def self.calc_sum_prev_year
+    term = Term.previous_term
+    NdlStatistic.where(:term_id => term.id).destroy_all
+    NdlStatistic.create!(:term_id => term.id).calc_all 
+  end
+
   # NDL 年報用集計処理
   def calc_all
     # validates term_id
