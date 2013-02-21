@@ -57,7 +57,8 @@ class NdlStatistic < ActiveRecord::Base
           includes(:manifestation => [:manifestation_type, :carrier_type]).
           where("manifestation_types.id in (?)", ManifestationType.type_ids(book_type)).
           where("carrier_types.name = 'print'").
-          where("bookbinder_id IS NULL OR items.bookbinder IS TRUE")
+          where("bookbinder_id IS NULL OR items.bookbinder IS TRUE").
+          where("items.rank < 2")
 	# 国内, 国外
         [ "domestic", "foreign" ].each do |region|
 	  manifestation_type = (region == "domestic") ? 'japanese%' : 'foreign%'
@@ -161,7 +162,8 @@ class NdlStatistic < ActiveRecord::Base
           where("manifestation_types.id in (?)", ManifestationType.type_ids(book_type)).
           where("carrier_types.name = 'print'").
           where("bookbinder_id IS NULL OR items.bookbinder IS TRUE").
-          where("items.created_at BETWEEN ? AND ?" ,@prev_term_end ,@curr_term_end)
+          where("items.created_at BETWEEN ? AND ?" ,@prev_term_end ,@curr_term_end).
+          where("items.rank < 2")
 	# 国内, 国外
         [ "domestic", "foreign" ].each do |region|
 	  manifestation_type = (region == "domestic") ? 'japanese%' : 'foreign%'
@@ -257,8 +259,7 @@ class NdlStatistic < ActiveRecord::Base
 	# 貸出資料数
 	item = checkouts.where("checkouts.created_at between ? and ?",
 	                        @prev_term_end, @curr_term_end).
-			 where(:checkout_renewal_count => 0).
-	                 count
+                  	        count
         ndl_stat_checkouts.create(
           :item_type => type,
 	  :user => user,

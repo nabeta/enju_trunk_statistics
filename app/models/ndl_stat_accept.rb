@@ -1,4 +1,5 @@
 class NdlStatAccept < ActiveRecord::Base
+  default_scope :order => :region
   belongs_to :ndl_statistic
   attr_accessible :donation, :production, :purchase, :region, :item_type
   
