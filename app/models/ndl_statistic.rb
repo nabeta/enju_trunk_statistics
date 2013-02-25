@@ -101,19 +101,22 @@ class NdlStatistic < ActiveRecord::Base
           items = Item.
             includes(:manifestation => :carrier_type).
             where("carrier_types.name = 'micro'").
-            where("bookbinder_id IS NULL OR items.bookbinder IS TRUE")
+            where("bookbinder_id IS NULL OR items.bookbinder IS TRUE").
+            where("items.rank < 2")
 	when "other_av"
 	  # 視聴覚資料
           items = Item.
             includes(:manifestation => :carrier_type).
             where("carrier_types.name in ('CD','DVD','AV')").
-            where("bookbinder_id IS NULL OR items.bookbinder IS TRUE")
+            where("bookbinder_id IS NULL OR items.bookbinder IS TRUE").
+            where("items.rank < 2")
 	when "other_file"
 	  # 電子出版物
           items = Item.
             includes(:manifestation => :carrier_type).
             where("carrier_types.name = 'file'").
-            where("bookbinder_id IS NULL OR items.bookbinder IS TRUE")
+            where("bookbinder_id IS NULL OR items.bookbinder IS TRUE").
+            where("items.rank < 2")
 	end
         region = "none"
         # 前年度末現在数
@@ -203,19 +206,22 @@ class NdlStatistic < ActiveRecord::Base
           items = Item.
             includes(:manifestation => :carrier_type).
             where("carrier_types.name = 'micro'").
-            where("bookbinder_id IS NULL OR items.bookbinder IS TRUE")
+            where("bookbinder_id IS NULL OR items.bookbinder IS TRUE").
+            where("items.rank < 2")
 	when "other_av"
 	  # 視聴覚資料
           items = Item.
             includes(:manifestation => :carrier_type).
             where("carrier_types.name in ('CD','DVD','AV')").
-            where("bookbinder_id IS NULL OR items.bookbinder IS TRUE")
+            where("bookbinder_id IS NULL OR items.bookbinder IS TRUE").
+            where("items.rank < 2")
 	when "other_file"
 	  # 電子出版物
           items = Item.
             includes(:manifestation => :carrier_type).
             where("carrier_types.name = 'file'").
-            where("bookbinder_id IS NULL OR items.bookbinder IS TRUE")
+            where("bookbinder_id IS NULL OR items.bookbinder IS TRUE").
+            where("items.rank < 2")
 	end
         region = "none"
 	# 購入
