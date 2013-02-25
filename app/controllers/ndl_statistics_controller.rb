@@ -39,7 +39,7 @@ class NdlStatisticsController < ApplicationController
     else
       ndl_statistic = NdlStatistic.where(:term_id => term_id).first
       file = NdlStatistic.get_ndl_report_excelx(ndl_statistic)
-      send_file file, :filename => "#{term}_#{t('ndl_report.filename_excelx')}",
+      send_file file, :filename => "#{term}_#{t('ndl_report.filename_excelx')}".encode("cp932"),
                       :type => 'application/x-msexcel', :disposition => 'attachment'
     end
   end
