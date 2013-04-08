@@ -40,7 +40,7 @@ class NdlStatistic < ActiveRecord::Base
     self.calc_manifestation_counts
     self.calc_accept_counts
     self.calc_checkout_counts
-    self.aggregate_jma_publications
+#    self.aggregate_jma_publications
   rescue Exception => e
     p "Failed to calculate ndl statistics: #{e}"
     logger.error "Failed to calculate ndl statistics: #{e}"
@@ -573,6 +573,7 @@ private
 	end
 
         # 7.刊行資料
+=begin
         wb.add_worksheet(:name => "7. 刊行資料") do |sheet|
 	  sheet.add_row ['7. 刊行資料'], :style => title_style, :height => height*2
 	  sheet.add_row
@@ -584,7 +585,7 @@ private
 	    sheet.add_row row, :style => default_style, :height => height
 	  end
 	end
-
+=end
         p.serialize(excel_filepath)
       end
       return excel_filepath
