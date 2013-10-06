@@ -259,11 +259,11 @@ class NdlStatistic < ActiveRecord::Base
           where("manifestation_types.id in (?)", ManifestationType.type_ids(book_type)).
           where("carrier_types.name = 'print'")
 	# 貸出者数
-	user = checkouts.where("checkouts.created_at between ? and ?",
+	user = checkouts.where("checkouts.checked_at between ? and ?",
 	                        @prev_term_end, @curr_term_end).
 	                 count(:user_id, :distinct => true)
 	# 貸出資料数
-	item = checkouts.where("checkouts.created_at between ? and ?",
+	item = checkouts.where("checkouts.checked_at between ? and ?",
 	                        @prev_term_end, @curr_term_end).
                   	        count
         ndl_stat_checkouts.create(
@@ -283,11 +283,11 @@ class NdlStatistic < ActiveRecord::Base
         where("manifestation_types.name not like ?", '%serial_book').
         where("carrier_types.name = 'print'")
       # 貸出者数
-      user = checkouts.where("checkouts.created_at between ? and ?",
+      user = checkouts.where("checkouts.checked_at between ? and ?",
                              @prev_term_end, @curr_term_end).
 	               count(:user_id, :distinct => true)
       # 貸出資料数
-      item = checkouts.where("checkouts.created_at between ? and ?",
+      item = checkouts.where("checkouts.checked_at between ? and ?",
 	                      @prev_term_end, @curr_term_end).
 	                      where(:checkout_renewal_count => 0).
                        count
