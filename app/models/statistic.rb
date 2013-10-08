@@ -863,7 +863,7 @@ class Statistic < ActiveRecord::Base
       set_date(statistic, start_at, term_id)
       statistic.data_type = data_type
       statistic.option = 5
-      statistic.value = Checkin.count_by_sql(["select count(*) from checkins, checkouts, reminder_lists where checkins.id = checkouts.checkin_id AND checkouts.id = reminder_lists.checkout_id AND checkins.created_at >= ? AND checkins.created_at  < ?", start_at, end_at])
+      statistic.value = Checkin.count_by_sql(["select count(*) from checkins, checkouts, reminder_lists where checkins.id = checkouts.checkin_id AND checkouts.id = reminder_lists.checkout_id AND checkins.checked_at >= ? AND checkins.checked_at  < ?", start_at, end_at])
       statistic.save! if statistic.value > 0
       @libraries.each do |library|
         statistic = Statistic.new
@@ -871,7 +871,7 @@ class Statistic < ActiveRecord::Base
         statistic.data_type = data_type
         statistic.library_id = library.id
         statistic.option = 5
-        statistic.value = Checkin.count_by_sql(["select count(*) from checkins, checkouts, reminder_lists, users, libraries where checkins.id = checkouts.checkin_id AND checkouts.id = reminder_lists.checkout_id AND checkins.librarian_id = users.id AND users.library_id= libraries.id AND libraries.id = ? AND checkins.created_at >= ? AND checkins.created_at < ?", library.id, start_at, end_at])
+        statistic.value = Checkin.count_by_sql(["select count(*) from checkins, checkouts, reminder_lists, users, libraries where checkins.id = checkouts.checkin_id AND checkouts.id = reminder_lists.checkout_id AND checkins.librarian_id = users.id AND users.library_id= libraries.id AND libraries.id = ? AND checkins.checked_at >= ? AND checkins.checked_at < ?", library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
       end
     end
@@ -885,14 +885,14 @@ class Statistic < ActiveRecord::Base
       statistic = Statistic.new
       set_date(statistic, start_at, term_id)
       statistic.data_type = data_type
-      statistic.value = Checkin.count_by_sql(["select count(*) from checkins where created_at >= ? AND created_at  < ?", start_at, end_at])
+      statistic.value = Checkin.count_by_sql(["select count(*) from checkins where checked_at >= ? AND checked_at  < ?", start_at, end_at])
       statistic.save! if statistic.value > 0
       @libraries.each do |library|
         statistic = Statistic.new
         set_date(statistic, start_at, term_id)
         statistic.data_type = data_type
         statistic.library_id = library.id
-        statistic.value = Checkin.count_by_sql(["select count(*) from checkins, users, libraries where checkins.librarian_id = users.id AND users.library_id= libraries.id AND libraries.id = ? AND checkins.created_at >= ? AND checkins.created_at < ?", library.id, start_at, end_at])
+        statistic.value = Checkin.count_by_sql(["select count(*) from checkins, users, libraries where checkins.librarian_id = users.id AND users.library_id= libraries.id AND libraries.id = ? AND checkins.checked_at >= ? AND checkins.checked_at < ?", library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
       end
     end
