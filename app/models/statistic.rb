@@ -603,7 +603,7 @@ class Statistic < ActiveRecord::Base
       statistic = Statistic.new
       set_date(statistic, start_at, term_id)
       statistic.data_type = data_type
-      statistic.value = Checkout.count_by_sql(["select count(*) from checkouts where created_at >= ? AND created_at  < ?", start_at, end_at])
+      statistic.value = Checkout.count_by_sql(["select count(*) from checkouts where checked_at >= ? AND checked_at  < ?", start_at, end_at])
       statistic.save! if statistic.value > 0
       # checkout items each user_group
       @user_groups.each do |user_group|
@@ -611,7 +611,7 @@ class Statistic < ActiveRecord::Base
         set_date(statistic, start_at, term_id)
         statistic.data_type = data_type
         statistic.user_group = user_group
-        statistic.value = Checkout.count_by_sql(["select count(checkouts) from checkouts, users  where checkouts.user_id = users.id AND users.user_group_id = ? AND checkouts.created_at >= ? AND checkouts.created_at  < ?", user_group.id, start_at, end_at])
+        statistic.value = Checkout.count_by_sql(["select count(checkouts) from checkouts, users  where checkouts.user_id = users.id AND users.user_group_id = ? AND checkouts.checked_at >= ? AND checkouts.checked_at  < ?", user_group.id, start_at, end_at])
         statistic.save! if statistic.value > 0
       end
       # checkout items each corporate users
@@ -620,7 +620,7 @@ class Statistic < ActiveRecord::Base
         set_date(statistic, start_at, term_id)
         statistic.data_type = data_type
         statistic.user_id = id
-        statistic.value = Checkout.count_by_sql(["select count(checkouts) from checkouts where user_id = ? AND created_at >= ? AND created_at < ? ", id, start_at, end_at])
+        statistic.value = Checkout.count_by_sql(["select count(checkouts) from checkouts where user_id = ? AND checked_at >= ? AND checked_at < ? ", id, start_at, end_at])
         statistic.save! if statistic.value > 0
       end
       # checkout items each manifestation_types
@@ -629,7 +629,7 @@ class Statistic < ActiveRecord::Base
         set_date(statistic, start_at, term_id)
         statistic.data_type = data_type
         statistic.manifestation_type_id = id
-        statistic.value = Checkout.count_by_sql(["select count(checkouts) from checkouts, items, manifestations, exemplifies where checkouts.item_id = items.id AND items.id = exemplifies.item_id AND manifestations.id = exemplifies.manifestation_id AND manifestations.manifestation_type_id = ? AND checkouts.created_at >= ? AND checkouts.created_at < ? ", id, start_at, end_at])
+        statistic.value = Checkout.count_by_sql(["select count(checkouts) from checkouts, items, manifestations, exemplifies where checkouts.item_id = items.id AND items.id = exemplifies.item_id AND manifestations.id = exemplifies.manifestation_id AND manifestations.manifestation_type_id = ? AND checkouts.checked_at >= ? AND checkouts.checked_at < ? ", id, start_at, end_at])
         statistic.save! if statistic.value > 0
       end
 
@@ -639,7 +639,7 @@ class Statistic < ActiveRecord::Base
       set_date(statistic, start_at, term_id)
       statistic.data_type = data_type 
       statistic.option = 1
-      sql = "select count(checkouts) from checkouts, items, exemplifies, manifestations where checkouts.item_id = items.id AND exemplifies.item_id = items.id AND exemplifies.manifestation_id = manifestations.id AND manifestations.ndc ~ '^[0-9]' AND checkouts.created_at >= ? AND checkouts.created_at < ?"
+      sql = "select count(checkouts) from checkouts, items, exemplifies, manifestations where checkouts.item_id = items.id AND exemplifies.item_id = items.id AND exemplifies.manifestation_id = manifestations.id AND manifestations.ndc ~ '^[0-9]' AND checkouts.checked_at >= ? AND checkouts.checked_at < ?"
       statistic.value = Checkout.count_by_sql([ sql, start_at, end_at])
       statistic.save! if statistic.value > 0
       # NDC for kids option: 2 (ndc starts K/E/C)
@@ -647,7 +647,7 @@ class Statistic < ActiveRecord::Base
       set_date(statistic, start_at, term_id)
       statistic.data_type = data_type
       statistic.option = 2
-      sql = "select count(checkouts) from checkouts, items, exemplifies, manifestations where checkouts.item_id = items.id AND exemplifies.item_id = items.id AND exemplifies.manifestation_id = manifestations.id AND manifestations.ndc ~ '^[KEC]' AND checkouts.created_at >= ? AND checkouts.created_at < ?"
+      sql = "select count(checkouts) from checkouts, items, exemplifies, manifestations where checkouts.item_id = items.id AND exemplifies.item_id = items.id AND exemplifies.manifestation_id = manifestations.id AND manifestations.ndc ~ '^[KEC]' AND checkouts.checked_at >= ? AND checkouts.checked_at < ?"
       statistic.value = Checkout.count_by_sql([ sql, start_at, end_at])
       statistic.save! if statistic.value > 0
       # NDC for else option: 3 (no ndc or ndc starts other alfabet)
@@ -655,7 +655,7 @@ class Statistic < ActiveRecord::Base
       set_date(statistic, start_at, term_id)
       statistic.data_type = data_type
       statistic.option = 3
-      sql = "select count(checkouts) from checkouts, items, exemplifies, manifestations where checkouts.item_id = items.id AND exemplifies.item_id = items.id AND exemplifies.manifestation_id = manifestations.id AND (manifestations.ndc ~ '^[^KEC0-9]' OR manifestations.ndc IS NULL) AND checkouts.created_at >= ? AND checkouts.created_at < ?"
+      sql = "select count(checkouts) from checkouts, items, exemplifies, manifestations where checkouts.item_id = items.id AND exemplifies.item_id = items.id AND exemplifies.manifestation_id = manifestations.id AND (manifestations.ndc ~ '^[^KEC0-9]' OR manifestations.ndc IS NULL) AND checkouts.checked_at >= ? AND checkouts.checked_at < ?"
       statistic.value = Checkout.count_by_sql([ sql, start_at, end_at])
       statistic.save! if statistic.value > 0
 =end    
@@ -664,7 +664,7 @@ class Statistic < ActiveRecord::Base
         set_date(statistic, start_at, term_id)
         statistic.data_type = data_type
         statistic.library_id = library.id
-        statistic.value = Checkout.count_by_sql(["select count(*) from checkouts, users, libraries where checkouts.librarian_id = users.id AND users.library_id= libraries.id AND libraries.id = ? AND checkouts.created_at >= ? AND checkouts.created_at < ?", library.id, start_at, end_at])
+        statistic.value = Checkout.count_by_sql(["select count(*) from checkouts, users, libraries where checkouts.librarian_id = users.id AND users.library_id= libraries.id AND libraries.id = ? AND checkouts.checked_at >= ? AND checkouts.checked_at < ?", library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
       end
 =begin
@@ -675,7 +675,7 @@ class Statistic < ActiveRecord::Base
           statistic.data_type = data_type
           statistic.library_id = library.id
           statistic.user_group = user_group
-          statistic.value = Checkout.count_by_sql(["select count(*) from checkouts, users, libraries where checkouts.librarian_id = users.id AND users.library_id= libraries.id AND users.user_group_id = ? AND libraries.id = ? AND checkouts.created_at >= ? AND checkouts.created_at < ?", user_group.id, library.id, start_at, end_at])
+          statistic.value = Checkout.count_by_sql(["select count(*) from checkouts, users, libraries where checkouts.librarian_id = users.id AND users.library_id= libraries.id AND users.user_group_id = ? AND libraries.id = ? AND checkouts.checked_at >= ? AND checkouts.checked_at < ?", user_group.id, library.id, start_at, end_at])
           statistic.save! if statistic.value > 0
         end
         # NDC for all option: 1 (ndc starts a number)
@@ -684,7 +684,7 @@ class Statistic < ActiveRecord::Base
         statistic.data_type = data_type
         statistic.option = 1
         statistic.library_id = library.id
-        sql = "select count(checkouts) from checkouts, items, exemplifies, manifestations, users, libraries where checkouts.item_id = items.id AND exemplifies.item_id = items.id AND exemplifies.manifestation_id = manifestations.id AND checkouts.librarian_id = users.id AND users.library_id = libraries.id AND libraries.id = ? AND manifestations.ndc ~ '^[0-9]' AND checkouts.created_at >= ? AND checkouts.created_at < ?"
+        sql = "select count(checkouts) from checkouts, items, exemplifies, manifestations, users, libraries where checkouts.item_id = items.id AND exemplifies.item_id = items.id AND exemplifies.manifestation_id = manifestations.id AND checkouts.librarian_id = users.id AND users.library_id = libraries.id AND libraries.id = ? AND manifestations.ndc ~ '^[0-9]' AND checkouts.checked_at >= ? AND checkouts.checked_at < ?"
         statistic.value = Checkout.count_by_sql([ sql, library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
         # NDC for kids option: 2 (ndc starts K/E/C)
@@ -693,7 +693,7 @@ class Statistic < ActiveRecord::Base
         statistic.data_type = data_type
         statistic.option = 2
         statistic.library_id = library.id
-        sql = "select count(checkouts) from checkouts, items, exemplifies, manifestations, users, libraries where checkouts.item_id = items.id AND exemplifies.item_id = items.id AND exemplifies.manifestation_id = manifestations.id AND checkouts.librarian_id = users.id AND users.library_id = libraries.id AND libraries.id = ? AND manifestations.ndc ~ '^[KEC]' AND checkouts.created_at >= ? AND checkouts.created_at < ?"
+        sql = "select count(checkouts) from checkouts, items, exemplifies, manifestations, users, libraries where checkouts.item_id = items.id AND exemplifies.item_id = items.id AND exemplifies.manifestation_id = manifestations.id AND checkouts.librarian_id = users.id AND users.library_id = libraries.id AND libraries.id = ? AND manifestations.ndc ~ '^[KEC]' AND checkouts.checked_at >= ? AND checkouts.checked_at < ?"
         statistic.value = Checkout.count_by_sql([ sql, library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
         # NDC for else option: 3 (no ndc or ndc starts other alfabet)
@@ -702,7 +702,7 @@ class Statistic < ActiveRecord::Base
         statistic.data_type = data_type
         statistic.option = 3
         statistic.library_id = library.id
-        sql = "select count(checkouts) from checkouts, items, exemplifies, manifestations, users, libraries where checkouts.item_id = items.id AND exemplifies.item_id = items.id AND exemplifies.manifestation_id = manifestations.id AND checkouts.librarian_id = users.id AND users.library_id = libraries.id AND libraries.id = ? AND (manifestations.ndc ~ '^[^KEC0-9]' OR manifestations.ndc IS NULL) AND checkouts.created_at >= ? AND checkouts.created_at < ?"
+        sql = "select count(checkouts) from checkouts, items, exemplifies, manifestations, users, libraries where checkouts.item_id = items.id AND exemplifies.item_id = items.id AND exemplifies.manifestation_id = manifestations.id AND checkouts.librarian_id = users.id AND users.library_id = libraries.id AND libraries.id = ? AND (manifestations.ndc ~ '^[^KEC0-9]' OR manifestations.ndc IS NULL) AND checkouts.checked_at >= ? AND checkouts.checked_at < ?"
         statistic.value = Checkout.count_by_sql([ sql, library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
       end
@@ -713,7 +713,7 @@ class Statistic < ActiveRecord::Base
       statistic = Statistic.new
       set_date(statistic, start_at, term_id)
       statistic.data_type = data_type
-      statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts where created_at >= ? AND created_at  < ?", start_at, end_at])
+      statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts where checked_at >= ? AND checked_at  < ?", start_at, end_at])
       statistic.save! if statistic.value > 0
 
       # checkout users each departments
@@ -722,7 +722,7 @@ class Statistic < ActiveRecord::Base
         set_date(statistic, start_at, term_id)
         statistic.data_type = data_type
         statistic.department_id = id
-        statistic.value = Checkout.count_by_sql(["select count(distinct checkouts.user_id) from checkouts, users where checkouts.user_id = users.id AND users.department_id = ? AND checkouts.created_at >= ? AND checkouts.created_at  < ?", id, start_at, end_at])
+        statistic.value = Checkout.count_by_sql(["select count(distinct checkouts.user_id) from checkouts, users where checkouts.user_id = users.id AND users.department_id = ? AND checkouts.checked_at >= ? AND checkouts.checked_at  < ?", id, start_at, end_at])
         statistic.save! if statistic.value > 0
       end
 
@@ -732,31 +732,31 @@ class Statistic < ActiveRecord::Base
       set_date(statistic, start_at, term_id)
       statistic.data_type = data_type
       statistic.user_type = 5
-      statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts where user_id IN (?) AND created_at >= ? AND created_at  < ?", @adult_ids, start_at, end_at])
+      statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts where user_id IN (?) AND checked_at >= ? AND checked_at  < ?", @adult_ids, start_at, end_at])
       statistic.save! if statistic.value > 0
       statistic = Statistic.new
       set_date(statistic, start_at, term_id)
       statistic.data_type = data_type
       statistic.user_type = 4
-      statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts where user_id IN (?) AND created_at >= ? AND created_at  < ?", @student_ids, start_at, end_at])
+      statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts where user_id IN (?) AND checked >= ? AND checked_at  < ?", @student_ids, start_at, end_at])
       statistic.save! if statistic.value > 0
       statistic = Statistic.new
       set_date(statistic, start_at, term_id)
       statistic.data_type = data_type
       statistic.user_type = 3
-      statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts where user_id IN (?) AND created_at >= ? AND created_at  < ?", @junior_ids, start_at, end_at])
+      statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts where user_id IN (?) AND checked_at >= ? AND checked_at  < ?", @junior_ids, start_at, end_at])
       statistic.save! if statistic.value > 0
       statistic = Statistic.new
       set_date(statistic, start_at, term_id)
       statistic.data_type = data_type
       statistic.user_type = 2
-      statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts where user_id IN (?) AND created_at >= ? AND created_at  < ?", @elementary_ids, start_at, end_at])
+      statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts where user_id IN (?) AND checked_at >= ? AND checked_at  < ?", @elementary_ids, start_at, end_at])
       statistic.save! if statistic.value > 0
       statistic = Statistic.new
       set_date(statistic, start_at, term_id)
       statistic.data_type = data_type
       statistic.user_type = 1
-      statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts where user_id IN (?) AND created_at >= ? AND created_at  < ?", @children_ids, start_at, end_at])
+      statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts where user_id IN (?) AND checked_at >= ? AND checked_at  < ?", @children_ids, start_at, end_at])
       statistic.save! if statistic.value > 0 =end
 =end
       @libraries.each do |library|
@@ -764,7 +764,7 @@ class Statistic < ActiveRecord::Base
         set_date(statistic, start_at, term_id)
         statistic.data_type = data_type
         statistic.library_id = library.id
-        statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts, users, libraries where checkouts.librarian_id = users.id AND users.library_id= libraries.id AND libraries.id = ? AND checkouts.created_at >= ? AND checkouts.created_at < ?", library.id, start_at, end_at])
+        statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts, users, libraries where checkouts.librarian_id = users.id AND users.library_id= libraries.id AND libraries.id = ? AND checkouts.checked_at >= ? AND checkouts.checked_at < ?", library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
       end
 =begin
@@ -774,35 +774,35 @@ class Statistic < ActiveRecord::Base
         statistic.data_type = data_type
         statistic.user_type = 5
         statistic.library_id = library.id
-        statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts, users, libraries where checkouts.librarian_id = users.id AND users.library_id= libraries.id AND user_id IN (?) AND libraries.id = ? AND checkouts.created_at >= ? AND checkouts.created_at < ?", @adult_ids, library.id, start_at, end_at])
+        statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts, users, libraries where checkouts.librarian_id = users.id AND users.library_id= libraries.id AND user_id IN (?) AND libraries.id = ? AND checkouts.checked_at >= ? AND checkouts.checked_at < ?", @adult_ids, library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
         statistic = Statistic.new
         set_date(statistic, start_at, term_id)
         statistic.data_type = data_type
         statistic.user_type = 4
         statistic.library_id = library.id
-        statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts, users, libraries where checkouts.librarian_id = users.id AND users.library_id= libraries.id AND user_id IN (?) AND libraries.id = ? AND checkouts.created_at >= ? AND checkouts.created_at < ?", @student_ids, library.id, start_at, end_at])
+        statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts, users, libraries where checkouts.librarian_id = users.id AND users.library_id= libraries.id AND user_id IN (?) AND libraries.id = ? AND checkouts.checked_at >= ? AND checkouts.checked_at < ?", @student_ids, library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
         statistic = Statistic.new
         set_date(statistic, start_at, term_id)
         statistic.data_type = data_type
         statistic.user_type = 3
         statistic.library_id = library.id
-        statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts, users, libraries where checkouts.librarian_id = users.id AND users.library_id= libraries.id AND user_id IN (?) AND libraries.id = ? AND checkouts.created_at >= ? AND checkouts.created_at < ?", @junior_ids, library.id, start_at, end_at])
+        statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts, users, libraries where checkouts.librarian_id = users.id AND users.library_id= libraries.id AND user_id IN (?) AND libraries.id = ? AND checkouts.checked_at >= ? AND checkouts.checked_at < ?", @junior_ids, library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
         statistic = Statistic.new
         set_date(statistic, start_at, term_id)
         statistic.data_type = data_type
         statistic.user_type = 2
         statistic.library_id = library.id
-        statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts, users, libraries where checkouts.librarian_id = users.id AND users.library_id= libraries.id AND user_id IN (?) AND libraries.id = ? AND checkouts.created_at >= ? AND checkouts.created_at < ?", @elementary_ids, library.id, start_at, end_at])
+        statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts, users, libraries where checkouts.librarian_id = users.id AND users.library_id= libraries.id AND user_id IN (?) AND libraries.id = ? AND checkouts.checked_at >= ? AND checkouts.checked_at < ?", @elementary_ids, library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
         statistic = Statistic.new
         set_date(statistic, start_at, term_id)
         statistic.data_type = data_type
         statistic.user_type = 1
         statistic.library_id = library.id
-        statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts, users, libraries where checkouts.librarian_id = users.id AND users.library_id= libraries.id AND user_id IN (?) AND libraries.id = ? AND checkouts.created_at >= ? AND checkouts.created_at < ?", @children_ids, library.id, start_at, end_at])
+        statistic.value = Checkout.count_by_sql(["select count(distinct user_id) from checkouts, users, libraries where checkouts.librarian_id = users.id AND users.library_id= libraries.id AND user_id IN (?) AND libraries.id = ? AND checkouts.checked_at >= ? AND checkouts.checked_at < ?", @children_ids, library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
       end
 =end
@@ -863,7 +863,7 @@ class Statistic < ActiveRecord::Base
       set_date(statistic, start_at, term_id)
       statistic.data_type = data_type
       statistic.option = 5
-      statistic.value = Checkin.count_by_sql(["select count(*) from checkins, checkouts, reminder_lists where checkins.id = checkouts.checkin_id AND checkouts.id = reminder_lists.checkout_id AND checkins.created_at >= ? AND checkins.created_at  < ?", start_at, end_at])
+      statistic.value = Checkin.count_by_sql(["select count(*) from checkins, checkouts, reminder_lists where checkins.id = checkouts.checkin_id AND checkouts.id = reminder_lists.checkout_id AND checkins.checked_at >= ? AND checkins.checked_at  < ?", start_at, end_at])
       statistic.save! if statistic.value > 0
       @libraries.each do |library|
         statistic = Statistic.new
@@ -871,7 +871,7 @@ class Statistic < ActiveRecord::Base
         statistic.data_type = data_type
         statistic.library_id = library.id
         statistic.option = 5
-        statistic.value = Checkin.count_by_sql(["select count(*) from checkins, checkouts, reminder_lists, users, libraries where checkins.id = checkouts.checkin_id AND checkouts.id = reminder_lists.checkout_id AND checkins.librarian_id = users.id AND users.library_id= libraries.id AND libraries.id = ? AND checkins.created_at >= ? AND checkins.created_at < ?", library.id, start_at, end_at])
+        statistic.value = Checkin.count_by_sql(["select count(*) from checkins, checkouts, reminder_lists, users, libraries where checkins.id = checkouts.checkin_id AND checkouts.id = reminder_lists.checkout_id AND checkins.librarian_id = users.id AND users.library_id= libraries.id AND libraries.id = ? AND checkins.checked_at >= ? AND checkins.checked_at < ?", library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
       end
     end
@@ -885,14 +885,14 @@ class Statistic < ActiveRecord::Base
       statistic = Statistic.new
       set_date(statistic, start_at, term_id)
       statistic.data_type = data_type
-      statistic.value = Checkin.count_by_sql(["select count(*) from checkins where created_at >= ? AND created_at  < ?", start_at, end_at])
+      statistic.value = Checkin.count_by_sql(["select count(*) from checkins where checked_at >= ? AND checked_at  < ?", start_at, end_at])
       statistic.save! if statistic.value > 0
       @libraries.each do |library|
         statistic = Statistic.new
         set_date(statistic, start_at, term_id)
         statistic.data_type = data_type
         statistic.library_id = library.id
-        statistic.value = Checkin.count_by_sql(["select count(*) from checkins, users, libraries where checkins.librarian_id = users.id AND users.library_id= libraries.id AND libraries.id = ? AND checkins.created_at >= ? AND checkins.created_at < ?", library.id, start_at, end_at])
+        statistic.value = Checkin.count_by_sql(["select count(*) from checkins, users, libraries where checkins.librarian_id = users.id AND users.library_id= libraries.id AND libraries.id = ? AND checkins.checked_at >= ? AND checkins.checked_at < ?", library.id, start_at, end_at])
         statistic.save! if statistic.value > 0
       end
     end
