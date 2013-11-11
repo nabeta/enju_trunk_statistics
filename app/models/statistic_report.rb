@@ -9410,7 +9410,7 @@ class StatisticReport < ActiveRecord::Base
       corporates.each do |user|
         report.page.list(:list).add_row do |row|
           row.item(:type).value(I18n.t('statistic_report.checkout_items')) if user == corporates.first
-          row.item(:user_name).value(user.patron.full_name)   
+          row.item(:user_name).value(user.agent.full_name)   
           sum = 0
           12.times do |t|
             if t < 3 # for Japanese fiscal year
@@ -9484,7 +9484,7 @@ class StatisticReport < ActiveRecord::Base
           when :type
             row << I18n.t('statistic_report.checkout_items')
           when :user_name
-            row << user.patron.full_name
+            row << user.agent.full_name
           when "sum"
             row << to_format(sum)
           else
@@ -9537,7 +9537,7 @@ class StatisticReport < ActiveRecord::Base
         corporates.each do |user|
           report.page.list(:list).add_row do |row|
             row.item(:type).value(I18n.t('statistic_report.checkout_items')) if user == corporates.first
-            row.item(:user_name).value(user.patron.full_name)   
+            row.item(:user_name).value(user.agent.full_name)   
             if start_date != 27
               13.times do |t|
                 value = Statistic.where(:yyyymmdd => "#{term.to_i}#{"%02d" % (t + start_date)}", :data_type => 221, :user_id => user.id).first.value rescue 0
@@ -9606,7 +9606,7 @@ class StatisticReport < ActiveRecord::Base
           when :type
             row << I18n.t('statistic_report.checkout_users')
           when :user_name
-            row << user.patron.full_name
+            row << user.agent.full_name
           when "sum"
             row << to_format(sum)
           else
